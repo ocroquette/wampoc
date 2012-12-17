@@ -1,0 +1,8 @@
+- non-existing RPC calls shall send error
+- log error when client gets several welcome messages
+- test special characters (UTF-8)
+- implement publish.exclude, publish.eligible
+- implement publish.excludeMe
+- handleIncommingMessage shall return error in case of inexistent ClientId
+- add tests for Subscriptions class
+
