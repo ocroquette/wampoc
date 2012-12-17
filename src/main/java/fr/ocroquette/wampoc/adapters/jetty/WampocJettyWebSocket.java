@@ -26,13 +26,11 @@ public class WampocJettyWebSocket implements OnTextMessage {
 
 	@Override
 	public void onOpen(Connection connection) {
-		System.out.println("ChatWebSocket.onOpen");
 		clientId = wampServer.addClient(new ChannelToConnectionAdapter(connection));
 	}
 
 	@Override
 	public void onClose(int closeCode, String message) {
-		System.out.println("ChatWebSocket.onClose");
 	}
 
 	public WampocJettyWebSocket(Server wampServer) {
@@ -40,7 +38,6 @@ public class WampocJettyWebSocket implements OnTextMessage {
 	}
 
 	public void onMessage(String data) {
-		System.out.println("ChatWebSocket.onMessage" + data);
 		try {
 			wampServer.handleIncomingMessage(clientId, data);
 		} catch (IOException e) {
