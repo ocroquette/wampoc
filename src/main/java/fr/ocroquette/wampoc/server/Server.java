@@ -106,7 +106,6 @@ public class Server {
 	}
 
 	protected void sendMessageToClient(ClientId clientId, String message) {
-		System.out.println("Sending to client " + clientId + ": "+message);
 		Channel channel = outgoingClientChannels.get(clientId);
 		if ( channel != null ) {
 			try {
