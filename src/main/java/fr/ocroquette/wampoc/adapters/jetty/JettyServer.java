@@ -4,24 +4,12 @@ import java.io.IOException;
 
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 
-import fr.ocroquette.wampoc.common.Channel;
 import fr.ocroquette.wampoc.server.ClientId;
-import fr.ocroquette.wampoc.server.Server;
+import fr.ocroquette.wampoc.server.WampServer;
 
-public class WampocJettyWebSocket implements OnTextMessage {
-	private Server wampServer;
-	private ClientId clientId;
-
-	private static class ChannelToConnectionAdapter implements Channel {
-		Connection connection;
-		ChannelToConnectionAdapter(Connection connection) {
-			this.connection = connection;
-		}
-		@Override
-		public void handle(String message) throws IOException {
-			connection.sendMessage(message);
-		}
-
+public class JettyServer implements OnTextMessage {
+	public JettyServer(WampServer wampServer) {
+		this.wampServer = wampServer; 
 	}
 
 	@Override
@@ -33,10 +21,6 @@ public class WampocJettyWebSocket implements OnTextMessage {
 	public void onClose(int closeCode, String message) {
 	}
 
-	public WampocJettyWebSocket(Server wampServer) {
-		this.wampServer = wampServer; 
-	}
-
 	public void onMessage(String data) {
 		try {
 			wampServer.handleIncomingMessage(clientId, data);
@@ -45,4 +29,7 @@ public class WampocJettyWebSocket implements OnTextMessage {
 			e.printStackTrace();
 		}
 	}
+
+	private WampServer wampServer;
+	private ClientId clientId;
 }	

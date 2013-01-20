@@ -6,7 +6,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 
-import fr.ocroquette.wampoc.adapters.jetty.WampocJettyWebSocketHandler;
+import fr.ocroquette.wampoc.adapters.jetty.JettyServerHandler;
 import fr.ocroquette.wampoc.common.Channel;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
@@ -25,8 +25,8 @@ public class JettyBasedServer
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		jettyServer.setHandler(context);
 
-		fr.ocroquette.wampoc.server.Server wampocServer = new fr.ocroquette.wampoc.server.Server();
-		WampocJettyWebSocketHandler webSocketHandler = new WampocJettyWebSocketHandler(wampocServer);
+		fr.ocroquette.wampoc.server.WampServer wampocServer = new fr.ocroquette.wampoc.server.WampServer();
+		JettyServerHandler webSocketHandler = new JettyServerHandler(wampocServer);
 		webSocketHandler.setHandler(new DefaultHandler());
 		jettyServer.setHandler(webSocketHandler);
 
@@ -41,7 +41,7 @@ public class JettyBasedServer
 	}
 
 	public static class Postman implements Runnable {
-		Postman(fr.ocroquette.wampoc.server.Server server) {
+		Postman(fr.ocroquette.wampoc.server.WampServer server) {
 			this.server = server;
 		}
 		@Override
@@ -70,10 +70,10 @@ public class JettyBasedServer
 			}
 		}
 		
-		protected fr.ocroquette.wampoc.server.Server server;
+		protected fr.ocroquette.wampoc.server.WampServer server;
 	}
 
-	public static void startPostman(fr.ocroquette.wampoc.server.Server server) {
+	public static void startPostman(fr.ocroquette.wampoc.server.WampServer server) {
 		new Thread(new Postman(server)).start();
 	}
 }

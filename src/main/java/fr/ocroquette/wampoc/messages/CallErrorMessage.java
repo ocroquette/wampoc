@@ -49,6 +49,7 @@ public class CallErrorMessage extends Message {
 			array.add(context.serialize(msg.getType().getCode()));
 			array.add(context.serialize(msg.callId));
 			array.add(context.serialize(msg.errorUri));
+			System.out.println(msg.errorUri);
 			array.add(context.serialize(msg.errorDesc));
 			if ( msg.errorDetails != null)
 				array.add(msg.errorDetails);

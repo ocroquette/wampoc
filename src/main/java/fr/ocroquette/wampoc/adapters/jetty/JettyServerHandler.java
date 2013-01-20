@@ -5,23 +5,23 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketHandler;
 
-import fr.ocroquette.wampoc.server.Server;
+import fr.ocroquette.wampoc.server.WampServer;
 
-public class WampocJettyWebSocketHandler extends WebSocketHandler {
+public class JettyServerHandler extends WebSocketHandler {
 	
-	public WampocJettyWebSocketHandler() {
-		this.wampocServer = new Server();
+	public JettyServerHandler() {
+		this.wampocServer = new WampServer();
 	}
 
-	public WampocJettyWebSocketHandler(Server wampocServer) {
+	public JettyServerHandler(WampServer wampocServer) {
 		this.wampocServer = wampocServer;
 	}
 	
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request,
 			String protocol) {
-		return new WampocJettyWebSocket(wampocServer);
+		return new JettyServer(wampocServer);
 	}
 
-	protected Server wampocServer;
+	protected WampServer wampocServer;
 }

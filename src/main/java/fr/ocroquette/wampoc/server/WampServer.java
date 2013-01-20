@@ -14,13 +14,13 @@ import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
 import fr.ocroquette.wampoc.messages.WelcomeMessage;
 
-public class Server {
+public class WampServer {
 
-	public Server() {
+	public WampServer() {
 		init();
 	}
 
-	public Server(String serverIdent) {
+	public WampServer(String serverIdent) {
 		init();
 		this.serverIdent =serverIdent; 
 	}
@@ -34,6 +34,7 @@ public class Server {
 	}
 
 	public ClientId addClient(Channel outgoingChannel) {
+		System.out.println("adding client");
 		ClientId clientId = clientIdFactory.getNext();
 		outgoingClientChannels.put(clientId, outgoingChannel);
 		try {

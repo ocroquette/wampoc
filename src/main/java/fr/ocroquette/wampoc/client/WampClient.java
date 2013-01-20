@@ -16,7 +16,7 @@ import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
 import fr.ocroquette.wampoc.messages.WelcomeMessage;
 
-public class Client {
+public class WampClient {
 
 	public boolean hasBeenWelcomed;
 	public String serverIdent;
@@ -25,7 +25,7 @@ public class Client {
 	Map<String, RpcResultReceiver> rpcResultReceivers;
 	Map<String, EventReceiver> eventReceivers;
 
-	public Client(Channel outgoingChannel) {
+	public WampClient(Channel outgoingChannel) {
 		init();
 		this.outgoingChannel = outgoingChannel;
 	}
@@ -83,6 +83,8 @@ public class Client {
 			System.err.println("ERROR: handleIncomingCallResultMessage doesn't know a handler for this call " + message.callId);
 			return;
 		}
+		
+		receiver.setCallResultMessage(message);
 		receiver.onSuccess();
 	}
 
@@ -105,6 +107,16 @@ public class Client {
 			rpcResultReceivers.put(callId, rpcResultHandler);
 		}
 		outgoingChannel.handle(MessageMapper.toJson(new CallMessage(callId, procedureId)));
+	}
+
+	public <PayloadType> void call(String procedureId, RpcResultReceiver rpcResultHandler, PayloadType payload, Class<PayloadType> payloadType) throws IOException {
+		String callId = UUID.randomUUID().toString();
+		synchronized(rpcResultReceivers) {
+			rpcResultReceivers.put(callId, rpcResultHandler);
+		}
+		CallMessage msg = new CallMessage(callId, procedureId);
+		msg.setPayload(payload, payloadType);
+		outgoingChannel.handle(MessageMapper.toJson(msg));
 	}
 
 	public void subscribe(String topicId, EventReceiver eventReceiver) throws IOException {

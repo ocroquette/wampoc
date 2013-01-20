@@ -21,6 +21,10 @@ public class RpcCall {
 		return callMessage.getPayload(inputType);  
 	}
 
+	public void setOutput(JsonElement jsonRoot)  {
+		outputJsonElement = jsonRoot;  
+	}
+
 	public <OutputType> void setOutput(OutputType outputValue, Class<OutputType> outputType)  {
 		outputJsonElement = new Gson().toJsonTree(outputValue, outputType);  
 	}

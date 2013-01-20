@@ -29,6 +29,7 @@ public class CallMessage extends Message {
 		this.callId = callId;
 		this.procedureId = procedureId;
 	}
+	
 	public static class Serializer implements JsonSerializer<CallMessage> {
 		@Override
 		public JsonElement serialize(CallMessage msg, Type arg1,

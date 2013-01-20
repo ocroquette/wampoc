@@ -16,7 +16,7 @@ import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.server.ClientId;
 import fr.ocroquette.wampoc.server.RpcCall;
 import fr.ocroquette.wampoc.server.RpcHandler;
-import fr.ocroquette.wampoc.server.Server;
+import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
 public class ServerRpcHandlingTest {
@@ -28,7 +28,7 @@ public class ServerRpcHandlingTest {
 	 */
 	@Test
 	public void serverExecuteSuccessfullRpcFromSingleClient() throws IOException {
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
 		server.registerRpcHandler(procedureId, newRpcHandler());
 
@@ -54,7 +54,7 @@ public class ServerRpcHandlingTest {
 	 */
 	@Test
 	public void serverExecuteSuccessfullRpcWithMultipleClients() throws IOException {
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
 		server.registerRpcHandler(procedureId, newRpcHandler());
 
@@ -81,7 +81,7 @@ public class ServerRpcHandlingTest {
 	 */
 	@Test
 	public void serverExecuteFailingRpcFromSingleClient() throws IOException {
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
 		server.registerRpcHandler(procedureId, newRpcHandler());
 

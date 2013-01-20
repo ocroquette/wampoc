@@ -17,7 +17,7 @@ public class ServerTest {
 	@Test
 	public void serverMustWelcomeClient() throws IOException {
 		String serverIdent = UUID.randomUUID().toString();
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		ProtocollingChannel channel = new ProtocollingChannel(); 
 		assertEquals(0, channel.handledMessages.size());
 		server.addClient(channel);

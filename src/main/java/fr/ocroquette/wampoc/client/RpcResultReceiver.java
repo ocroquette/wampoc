@@ -1,9 +1,22 @@
 package fr.ocroquette.wampoc.client;
 
+import fr.ocroquette.wampoc.messages.CallResultMessage;
+
 public abstract class RpcResultReceiver {
 
-	abstract void onSuccess();
+	abstract public void onSuccess();
 
-	abstract void onError();
+	abstract public void onError();
+
+	public <PayloadType> PayloadType getPayload(Class<PayloadType> payloadType) {
+		return callResultMessage.getPayload(payloadType);  
+	}
+	
+	void setCallResultMessage(CallResultMessage message) {
+		callResultMessage = message;
+	}
+
+	private CallResultMessage callResultMessage;
+
 
 }

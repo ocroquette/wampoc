@@ -13,7 +13,7 @@ import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
 import fr.ocroquette.wampoc.server.ClientId;
-import fr.ocroquette.wampoc.server.Server;
+import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
 public class ServerEventsTest {
@@ -23,7 +23,7 @@ public class ServerEventsTest {
 	public void subscribeAndPublish() throws IOException {
 		String payload = "Publish payload";
 		
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
@@ -60,7 +60,7 @@ public class ServerEventsTest {
 	public void unsubscribe() throws IOException {
 		String payload = "Publish payload";
 		
-		Server server = new Server(serverIdent);
+		WampServer server = new WampServer(serverIdent);
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
