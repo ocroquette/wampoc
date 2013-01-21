@@ -65,7 +65,7 @@ public class CallMessage extends Message {
 
 	public <PayloadType> PayloadType getPayload(Class<PayloadType> type) {
 		if ( payload == null )
-			throw new NullPointerException("No payload has been set");
+			return null;
 		Gson gson = new Gson();
 		return gson.fromJson(payload, type);
 	}
