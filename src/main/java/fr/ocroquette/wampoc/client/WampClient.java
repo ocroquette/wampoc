@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import fr.ocroquette.wampoc.common.Channel;
+import fr.ocroquette.wampoc.messages.CallErrorMessage;
 import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 import fr.ocroquette.wampoc.messages.EventMessage;
@@ -38,7 +39,7 @@ public class WampClient {
 	public void handleIncomingMessage(String jsonText) {
 		Message message = MessageMapper.fromJson(jsonText);
 
-		System.out.println("handleIncomingMessage: " + jsonText);
+		// System.out.println("handleIncomingMessage: " + jsonText);
 		if ( message.getType() == MessageType.WELCOME ) {
 			handleIncomingWelcomeMessage((WelcomeMessage)message);
 			return;
@@ -53,6 +54,9 @@ public class WampClient {
 		switch(message.getType()) {
 		case CALLRESULT:
 			handleIncomingCallResultMessage((CallResultMessage)message);
+			break;
+		case CALLERROR:
+			handleIncomingCallErrorMessage((CallErrorMessage)message);
 			break;
 		case EVENT:
 			handleIncomingEventMessage((EventMessage)message);
@@ -87,6 +91,22 @@ public class WampClient {
 		receiver.setCallResultMessage(message);
 		receiver.onSuccess();
 	}
+
+	protected void handleIncomingCallErrorMessage(CallErrorMessage message) {
+		RpcResultReceiver receiver = null;
+		synchronized(rpcResultReceivers) {
+			receiver = rpcResultReceivers.get(message.callId);
+		}
+		if ( receiver == null ) {
+			// TODO logging
+			System.err.println("ERROR: handleIncomingCallErrorMessage doesn't know a handler for this call " + message.callId);
+			return;
+		}
+		
+		receiver.setCallErrorMessage(message);
+		receiver.onError();
+	}
+
 
 	protected void handleIncomingEventMessage(EventMessage message) {
 		EventReceiver receiver = null;

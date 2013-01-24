@@ -18,7 +18,7 @@ public class CallMessageTest implements TestsNotToForget {
 		assertEquals(callId, callMessage.callId);
 		assertEquals(procedureId, callMessage.procedureId);
 	}
-	
+
 	public CallMessage randomCallMessage() {
 		return new CallMessage(rndStr(), rndStr());
 	}
@@ -32,7 +32,7 @@ public class CallMessageTest implements TestsNotToForget {
 		assertTrue(msg1.equals(msg1bis));
 		assertFalse(msg1.equals(msg2));
 		assertFalse(msg1.equals(msg3));
-		
+
 		SimplePayload payload1 = new SimplePayload("String", 1); 
 		SimplePayload payload1bis = new SimplePayload("String", 1); 
 		SimplePayload payload2 = new SimplePayload("String", 2); 
@@ -54,12 +54,8 @@ public class CallMessageTest implements TestsNotToForget {
 		CallMessage clone = (CallMessage) MessageMapper.fromJson(json);
 		assertEquals(msg, clone);
 
-		try {
-			clone.getPayload(SimplePayload.class);
-			assertTrue("getPayload shall throw an exception if there is no payload", false);
-		}
-		catch(NullPointerException e) {
-		}
+		Object payload = clone.getPayload(SimplePayload.class);
+		assertNull("getPayload shall return null if there is no payload", payload);
 	}
 
 	@Test

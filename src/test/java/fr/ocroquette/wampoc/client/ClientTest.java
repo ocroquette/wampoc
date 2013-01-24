@@ -90,7 +90,21 @@ public class ClientTest {
 		String callId = getCallId(channel.handledMessages.get(0));
 		client.handleIncomingMessage("[3, \"" + callId + "\" , null]");
 		assertEquals("RPC call shall be successful", true, rpcResultReciever.isSuccess);
-		assertEquals("RPC call shall be successfull", false, rpcResultReciever.isError);
+		assertEquals("RPC error handler shall not have been called", false, rpcResultReciever.isError);
+		// TODO check appropriate logging
+	}
+
+	@Test
+	public void handleRpcError() throws IOException {
+		String procedureId = "http://host/handleRpcError";
+		ProtocollingChannel channel = new ProtocollingChannel();
+		WampClient client = newClient(channel);
+		ProtocollingRpcResultReceiver rpcResultReciever = new ProtocollingRpcResultReceiver();
+		client.call(procedureId, rpcResultReciever);
+		String callId = getCallId(channel.handledMessages.get(0));
+		client.handleIncomingMessage("[4, \"" + callId + "\" , \"http://error\", \"Some error occured\"]");
+		assertEquals("RPC call shall be successful", false, rpcResultReciever.isSuccess);
+		assertEquals("RPC error handler shall have been called", true, rpcResultReciever.isError);
 		// TODO check appropriate logging
 	}
 

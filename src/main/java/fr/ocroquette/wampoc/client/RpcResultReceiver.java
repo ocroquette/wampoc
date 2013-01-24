@@ -1,5 +1,6 @@
 package fr.ocroquette.wampoc.client;
 
+import fr.ocroquette.wampoc.messages.CallErrorMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 
 public abstract class RpcResultReceiver {
@@ -16,7 +17,11 @@ public abstract class RpcResultReceiver {
 		callResultMessage = message;
 	}
 
-	private CallResultMessage callResultMessage;
+	public void setCallErrorMessage(CallErrorMessage message) {
+		callErrorMessage = message;
+	}
 
+	protected CallResultMessage callResultMessage;
+	protected CallErrorMessage callErrorMessage;
 
 }
