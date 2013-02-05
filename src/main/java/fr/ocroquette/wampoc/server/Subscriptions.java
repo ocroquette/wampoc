@@ -9,15 +9,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Subscriptions {
 
 	public interface ActionOnSubscriber {
-		void execute(ClientId clientId);
+		void execute(SessionId clientId);
 	}
 	
 	public Subscriptions() {
-		subscriptions = new ConcurrentHashMap<String, Set<ClientId>>();
+		subscriptions = new ConcurrentHashMap<String, Set<SessionId>>();
 	}
 
-	public void subscribe(ClientId clientId, String topicUri) {
-		Set<ClientId> clientList = subscriptions.get(topicUri);
+	public void subscribe(SessionId clientId, String topicUri) {
+		Set<SessionId> clientList = subscriptions.get(topicUri);
 		if ( clientList == null ) {
 			clientList = newClientSet();
 			subscriptions.put(topicUri, clientList);
@@ -25,8 +25,8 @@ public class Subscriptions {
 		clientList.add(clientId);
 	}
 
-	public void unsubscribe(ClientId clientId, String topicUri) {
-		Set<ClientId> clientList = subscriptions.get(topicUri);
+	public void unsubscribe(SessionId clientId, String topicUri) {
+		Set<SessionId> clientList = subscriptions.get(topicUri);
 		if ( clientList == null ) {
 			return;
 		}
@@ -35,10 +35,10 @@ public class Subscriptions {
 	
 	public long forAllSubscribers(String topic, ActionOnSubscriber action) {
 		long performed = 0;
-		Set<ClientId> set = subscriptions.get(topic);
+		Set<SessionId> set = subscriptions.get(topic);
 		if (set == null)
 			return performed;
-		for (ClientId clientId: set) {
+		for (SessionId clientId: set) {
 			action.execute(clientId);
 			performed++;
 		}
@@ -46,9 +46,9 @@ public class Subscriptions {
 	}
 
 
-	private Set<ClientId> newClientSet() {
-		return Collections.newSetFromMap(new ConcurrentHashMap<ClientId, Boolean>());
+	private Set<SessionId> newClientSet() {
+		return Collections.newSetFromMap(new ConcurrentHashMap<SessionId, Boolean>());
 	}
 	
-	protected Map<String, Set<ClientId>> subscriptions;
+	protected Map<String, Set<SessionId>> subscriptions;
 }

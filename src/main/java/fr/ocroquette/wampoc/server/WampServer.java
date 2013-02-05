@@ -26,41 +26,40 @@ public class WampServer {
 	}
 
 	protected void init() {
-		outgoingClientChannels = new ConcurrentHashMap<ClientId, Channel>();
+		outgoingClientChannels = new ConcurrentHashMap<SessionId, Channel>();
 		rpcHandlers = new ConcurrentHashMap<String, RpcHandler>();
 		serverIdent = "<UNIDENTIFIED SERVER>";
 		subscriptions = new Subscriptions();
-		clientIdFactory = new ClientIdFactory();
+		sessionIdFactory = new SessionIdFactory();
 	}
 
-	public ClientId addClient(Channel outgoingChannel) {
-		System.out.println("adding client");
-		ClientId clientId = clientIdFactory.getNext();
-		outgoingClientChannels.put(clientId, outgoingChannel);
+	public SessionId addClient(Channel outgoingChannel) {
+		SessionId sessionId = sessionIdFactory.getNew();
+		outgoingClientChannels.put(sessionId, outgoingChannel);
 		try {
-			outgoingChannel.handle(MessageMapper.toJson(new WelcomeMessage(clientId.toString(), serverIdent)));
+			outgoingChannel.handle(MessageMapper.toJson(new WelcomeMessage(sessionId.toString(), serverIdent)));
 		} catch (IOException e) {
-			// Could not even greet this client. How sad is that?
+			// How sad: we could not even greet this client
 			return null;
 		}
 		
-		return clientId;
+		return sessionId;
 	}
 
-	public void handleIncomingMessage(ClientId clientId, String jsonText) throws IOException {
+	public void handleIncomingMessage(SessionId sessionId, String jsonText) throws IOException {
 		Message message = MessageMapper.fromJson(jsonText);
 		switch(message.getType()) {
 		case CALL:
-			handleIncomingCallMessage(clientId, (CallMessage)message);
+			handleIncomingCallMessage(sessionId, (CallMessage)message);
 			break;
 		case SUBSCRIBE:
-			handleIncomingSubscribeMessage(clientId, (SubscribeMessage)message);
+			handleIncomingSubscribeMessage(sessionId, (SubscribeMessage)message);
 			break;
 		case UNSUBSCRIBE:
-			handleIncomingUnsubscribeMessage(clientId, (UnsubscribeMessage)message);
+			handleIncomingUnsubscribeMessage(sessionId, (UnsubscribeMessage)message);
 			break;
 		case PUBLISH:
-			handleIncomingPublishMessage(clientId, (PublishMessage)message);
+			handleIncomingPublishMessage(sessionId, (PublishMessage)message);
 			break;
 		default:
 			// TODO logging
@@ -68,77 +67,77 @@ public class WampServer {
 		}
 	}
 
-	private void handleIncomingSubscribeMessage(ClientId clientId, SubscribeMessage message) {
-		subscriptions.subscribe(clientId, message.topicUri);
+	private void handleIncomingSubscribeMessage(SessionId sessionId, SubscribeMessage message) {
+		subscriptions.subscribe(sessionId, message.topicUri);
 	}
 
-	private void handleIncomingUnsubscribeMessage(ClientId clientId, UnsubscribeMessage message) {
-		subscriptions.unsubscribe(clientId, message.topicUri);
+	private void handleIncomingUnsubscribeMessage(SessionId sessionId, UnsubscribeMessage message) {
+		subscriptions.unsubscribe(sessionId, message.topicUri);
 	}
 
-	private void handleIncomingCallMessage(ClientId clientId, CallMessage message) throws IOException {
+	private void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException {
 		String procedureId = message.procedureId;
 		RpcHandler handler= rpcHandlers.get(procedureId);
 		if ( handler != null ) {
 			RpcCall rpcCall = new RpcCall(message);
 			handler.execute(rpcCall);
-			sendMessageToClient(clientId, rpcCall.getResultingJson());
+			sendMessageToClient(sessionId, rpcCall.getResultingJson());
 		}
 		else
 			// TODO
 			System.out.println("No handler registered for "+procedureId);
 	}
 
-	private void handleIncomingPublishMessage(final ClientId clientId, final PublishMessage message) throws IOException {
+	private void handleIncomingPublishMessage(final SessionId sessionId, final PublishMessage message) throws IOException {
 		final EventMessage eventMessage = new EventMessage(message.topicUri);
 		eventMessage.setPayload(message.payload);
 		Subscriptions.ActionOnSubscriber action = new Subscriptions.ActionOnSubscriber() {
 			@Override
-			public void execute(ClientId subscriberClientId) {
-				if ( shallSendPublish(message.excludeMe, clientId, subscriberClientId))
+			public void execute(SessionId subscriberClientId) {
+				if ( shallSendPublish(message.excludeMe, sessionId, subscriberClientId))
 					sendMessageToClient(subscriberClientId, MessageMapper.toJson(eventMessage));
 			}
 		};
 		subscriptions.forAllSubscribers(message.topicUri, action);
 	}
 
-	private boolean shallSendPublish(Boolean excludeMe, ClientId from, ClientId to) {
+	private boolean shallSendPublish(Boolean excludeMe, SessionId from, SessionId to) {
 		return excludeMe == null || ! excludeMe.booleanValue() || from != to;
 	}
 
-	protected void sendMessageToClient(ClientId clientId, String message) {
-		Channel channel = outgoingClientChannels.get(clientId);
+	protected void sendMessageToClient(SessionId sessionId, String message) {
+		Channel channel = outgoingClientChannels.get(sessionId);
 		if ( channel != null ) {
 			try {
 				channel.handle(message);
 			}
 			catch(IOException e) {
 				// TODO
-				System.out.println("Looks like client " + clientId + "is disconnecting. Discarding.");
-				deleteClient(clientId);
+				System.out.println("Looks like client " + sessionId + "is disconnecting. Discarding.");
+				deleteClient(sessionId);
 			}
 		}
 		else
 			// TODO
-			System.out.println("Cannot send to client, client ID unknown: "+clientId);
+			System.out.println("Cannot send to client, client ID unknown: "+sessionId);
 	}
 
-	private void deleteClient(ClientId clientId) {
-		outgoingClientChannels.remove(clientId);
+	private void deleteClient(SessionId sessionId) {
+		outgoingClientChannels.remove(sessionId);
 	}
 
 
-	public void cancelAllSubscriptions(ClientId clientId) {
+	public void cancelAllSubscriptions(SessionId sessionId) {
 	}
 
 	public void registerRpcHandler(String procedureId, RpcHandler rpcHandler) {
 		rpcHandlers.put(procedureId, rpcHandler);
 	}
 
-	protected Map<ClientId, Channel> outgoingClientChannels;
+	protected Map<SessionId, Channel> outgoingClientChannels;
 	protected Map<String, RpcHandler> rpcHandlers;
 	protected Subscriptions subscriptions;
 	protected String serverIdent;
-	protected ClientIdFactory clientIdFactory;
+	protected SessionIdFactory sessionIdFactory;
 
 }

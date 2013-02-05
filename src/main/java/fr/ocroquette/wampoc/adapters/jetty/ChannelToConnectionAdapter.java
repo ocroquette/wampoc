@@ -6,8 +6,8 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 
 import fr.ocroquette.wampoc.common.Channel;
 
-class ChannelToConnectionAdapter implements Channel {
-	ChannelToConnectionAdapter(Connection connection) {
+public class ChannelToConnectionAdapter implements Channel {
+	public ChannelToConnectionAdapter(Connection connection) {
 		this.connection = connection;
 	}
 	@Override

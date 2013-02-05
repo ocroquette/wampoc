@@ -12,7 +12,7 @@ import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
-import fr.ocroquette.wampoc.server.ClientId;
+import fr.ocroquette.wampoc.server.SessionId;
 import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
@@ -27,12 +27,12 @@ public class ServerEventsTest {
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		ClientId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.addClient(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		ClientId clientId2 = server.addClient(channel2);
+		SessionId clientId2 = server.addClient(channel2);
 		server.handleIncomingMessage(clientId2, MessageMapper.toJson(subscribeMessage));
 
 
@@ -64,7 +64,7 @@ public class ServerEventsTest {
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		ClientId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.addClient(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
 

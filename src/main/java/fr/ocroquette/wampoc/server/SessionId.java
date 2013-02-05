@@ -2,9 +2,9 @@ package fr.ocroquette.wampoc.server;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 
-public class ClientId {
+public class SessionId {
 
-	ClientId(String s) {
+	SessionId(String s) {
 		if ( s == null )
 			throw new NullPointerException("String cannot be null as identifier for ClientId");
 		this.stringId = s;

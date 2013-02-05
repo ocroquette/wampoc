@@ -10,7 +10,7 @@ import fr.ocroquette.wampoc.adapters.jetty.JettyServerHandler;
 import fr.ocroquette.wampoc.common.Channel;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
-import fr.ocroquette.wampoc.server.ClientId;
+import fr.ocroquette.wampoc.server.SessionId;
 
 
 public class JettyBasedServer 
@@ -46,7 +46,7 @@ public class JettyBasedServer
 		}
 		@Override
 		public void run() {
-			ClientId clientId;
+			SessionId clientId;
 			try {
 				clientId = server.addClient(new Channel() {
 					@Override

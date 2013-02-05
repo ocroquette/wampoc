@@ -13,7 +13,7 @@ import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 import fr.ocroquette.wampoc.messages.Message;
 import fr.ocroquette.wampoc.messages.MessageMapper;
-import fr.ocroquette.wampoc.server.ClientId;
+import fr.ocroquette.wampoc.server.SessionId;
 import fr.ocroquette.wampoc.server.RpcCall;
 import fr.ocroquette.wampoc.server.RpcHandler;
 import fr.ocroquette.wampoc.server.WampServer;
@@ -33,7 +33,7 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, newRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		ClientId clientId = server.addClient(channel);
+		SessionId clientId = server.addClient(channel);
 
 		CallMessage callMessage = newCallMessage(procedureId, new RpcInput());
 		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
@@ -59,10 +59,10 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, newRpcHandler());
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		ClientId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.addClient(channel1);
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		ClientId clientId2 = server.addClient(channel2);
+		SessionId clientId2 = server.addClient(channel2);
 
 		CallMessage callMessage = newCallMessage(procedureId, new RpcInput());
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(callMessage));
@@ -86,7 +86,7 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, newRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		ClientId clientId = server.addClient(channel);
+		SessionId clientId = server.addClient(channel);
 
 		RpcInput input = new RpcInput();
 		input.pleaseFail("http://error.com", "Error description", "Error details");

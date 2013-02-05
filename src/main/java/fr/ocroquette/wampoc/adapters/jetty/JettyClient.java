@@ -24,7 +24,7 @@ public class JettyClient {
 		client.setProtocol(protocol);
 
 		jettyClientAdapter = new JettyClientAdapter();
-		connection = client.open(new URI("ws://127.0.0.1:8081/"), jettyClientAdapter).get(5, TimeUnit.SECONDS);
+		connection = client.open(uri, jettyClientAdapter).get(5, TimeUnit.SECONDS);
 	}
 
 	public WampClient getWampClient() {

@@ -20,7 +20,7 @@ public class JettyServerHandler extends WebSocketHandler {
 	@Override
 	public WebSocket doWebSocketConnect(HttpServletRequest request,
 			String protocol) {
-		return new JettyServer(wampocServer);
+		return new JettyServerWebSocketProxy(wampocServer);
 	}
 
 	protected WampServer wampocServer;
