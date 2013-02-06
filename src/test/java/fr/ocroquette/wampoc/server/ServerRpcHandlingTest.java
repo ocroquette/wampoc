@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.CallErrorMessage;
 import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
@@ -24,18 +25,17 @@ public class ServerRpcHandlingTest {
 
 	/***
 	 * RPC results shall be sent correctly to the client
-	 * @throws IOException 
 	 */
 	@Test
-	public void serverExecuteSuccessfullRpcFromSingleClient() throws IOException {
+	public void serverExecuteSuccessfullRpcFromSingleClient() throws IOException, BadArgumentException {
 		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
-		server.registerRpcHandler(procedureId, newRpcHandler());
+		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		SessionId clientId = server.addClient(channel);
+		SessionId clientId = server.connectClient(channel);
 
-		CallMessage callMessage = newCallMessage(procedureId, new RpcInput());
+		CallMessage callMessage = newCallMessage(procedureId, new MyRpcInputPayload());
 		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
 
 		assertEquals(2, channel.handledMessages.size());
@@ -44,27 +44,28 @@ public class ServerRpcHandlingTest {
 		CallResultMessage callResultMessage = (CallResultMessage) message;
 		assertNotNull(callResultMessage);
 		assertEquals("Dns3wuQo0ipOX1Xc", callResultMessage.callId);
-		RpcOutput rpcOutput = callResultMessage.getPayload(RpcOutput.class);
+		MyRpcOutputSimpleString rpcOutput = callResultMessage.getPayload(MyRpcOutputSimpleString.class);
 		assertEquals("Hello back!", rpcOutput.s2);
 
 	}
 	/***
 	 * RPC results shall be  sent to the right client
 	 * @throws IOException 
+	 * @throws BadArgumentException 
 	 */
 	@Test
-	public void serverExecuteSuccessfullRpcWithMultipleClients() throws IOException {
+	public void serverExecuteSuccessfullRpcWithMultipleClients() throws IOException, BadArgumentException {
 		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
-		server.registerRpcHandler(procedureId, newRpcHandler());
+		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.connectClient(channel1);
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		SessionId clientId2 = server.addClient(channel2);
+		SessionId clientId2 = server.connectClient(channel2);
 
-		CallMessage callMessage = newCallMessage(procedureId, new RpcInput());
+		CallMessage callMessage = newCallMessage(procedureId, new MyRpcInputPayload());
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(callMessage));
 
 		assertEquals(2, channel1.handledMessages.size());
@@ -78,17 +79,18 @@ public class ServerRpcHandlingTest {
 	/***
 	 * RPC results shall be sent correctly to the client
 	 * @throws IOException 
+	 * @throws BadArgumentException 
 	 */
 	@Test
-	public void serverExecuteFailingRpcFromSingleClient() throws IOException {
+	public void serverExecuteFailingRpcFromSingleClient() throws IOException, BadArgumentException {
 		WampServer server = new WampServer(serverIdent);
 		String procedureId = "http://host/procedureId";
-		server.registerRpcHandler(procedureId, newRpcHandler());
+		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		SessionId clientId = server.addClient(channel);
+		SessionId clientId = server.connectClient(channel);
 
-		RpcInput input = new RpcInput();
+		MyRpcInputPayload input = new MyRpcInputPayload();
 		input.pleaseFail("http://error.com", "Error description", "Error details");
 		CallMessage callMessage = newCallMessage(procedureId, input);
 		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
@@ -104,8 +106,28 @@ public class ServerRpcHandlingTest {
 		assertEquals(input.failWithErrorDetails, callErrorMessage.getErrorDetails(String.class));
 	}
 
-	public class RpcInput {
-		RpcInput() {
+	@Test
+	public void unkwownProcedure() throws IOException, BadArgumentException {
+		WampServer server = new WampServer(serverIdent);
+		String procedureId = "http://host/procedureId";
+
+		ProtocollingChannel channel = new ProtocollingChannel();
+		SessionId clientId = server.connectClient(channel);
+
+		CallMessage callMessage = newCallMessage(procedureId, null);
+		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
+
+		assertEquals(2, channel.handledMessages.size());
+
+		Message message = MessageMapper.fromJson(channel.handledMessages.get(1));
+		CallErrorMessage callErrorMessage = (CallErrorMessage) message;
+		assertNotNull(callErrorMessage);
+		assertEquals(callMessage.callId, callErrorMessage.callId);
+		assertEquals(callErrorMessage.errorUri, "http://ocroquette.fr/noHandlerForProcedure");
+	}
+
+	public class MyRpcInputPayload {
+		MyRpcInputPayload() {
 			s = "Hello";
 			i = 10;
 		}
@@ -123,23 +145,23 @@ public class ServerRpcHandlingTest {
 		public String failWithErrorDetails;
 	};
 
-	public class RpcOutput {
+	public class MyRpcOutputSimpleString {
 		public String s2;
 	};
 
-	private RpcHandler newRpcHandler() {
+	private RpcHandler myTestRpcHandler() {
 		return new RpcHandler() {
 
 			@Override
 			public void execute(RpcCall rpcCall) {
-				RpcInput input = rpcCall.getInput(RpcInput.class);
+				MyRpcInputPayload input = rpcCall.getInput(MyRpcInputPayload.class);
 				assertNotNull(input);
 				assertEquals(input.s, "Hello");
 				assertEquals(input.i, 10);
 				if ( ! input.pleaseFail ) {
-					RpcOutput rpcOutput = new RpcOutput();
+					MyRpcOutputSimpleString rpcOutput = new MyRpcOutputSimpleString();
 					rpcOutput.s2 = "Hello back!";
-					rpcCall.setOutput(rpcOutput, RpcOutput.class);
+					rpcCall.setOutput(rpcOutput, MyRpcOutputSimpleString.class);
 				}
 				else {
 					// rpcCall.setError("http://error.com", "Some error occured");
@@ -151,11 +173,11 @@ public class ServerRpcHandlingTest {
 	}
 
 
-	private CallMessage newCallMessage(String procedureId, RpcInput input) {
+	private CallMessage newCallMessage(String procedureId, MyRpcInputPayload input) {
 		CallMessage callMessage = new CallMessage();
 		callMessage.callId = "Dns3wuQo0ipOX1Xc";
 		callMessage.procedureId = procedureId;
-		callMessage.setPayload(input, RpcInput.class);
+		callMessage.setPayload(input, MyRpcInputPayload.class);
 		return callMessage;
 	}
 }

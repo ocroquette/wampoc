@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 
 import fr.ocroquette.wampoc.adapters.jetty.JettyServerHandler;
 import fr.ocroquette.wampoc.common.Channel;
+import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.server.SessionId;
@@ -48,7 +49,7 @@ public class JettyBasedServer
 		public void run() {
 			SessionId clientId;
 			try {
-				clientId = server.addClient(new Channel() {
+				clientId = server.connectClient(new Channel() {
 					@Override
 					public void handle(String message) throws IOException {
 					}});
@@ -62,11 +63,12 @@ public class JettyBasedServer
 						server.handleIncomingMessage(clientId, json);
 					} catch (InterruptedException e) {
 						return;
+					} catch (BadArgumentException e) {
+						e.printStackTrace();
 					}
 				}
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		

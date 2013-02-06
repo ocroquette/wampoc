@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 
+import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.server.SessionId;
 import fr.ocroquette.wampoc.server.WampServer;
 
@@ -20,7 +21,7 @@ public class JettyServerWebSocketProxy implements OnTextMessage {
 
 	@Override
 	public void onOpen(Connection connection) {
-		sessionId = wampServer.addClient(new ChannelToConnectionAdapter(connection));
+		sessionId = wampServer.connectClient(new ChannelToConnectionAdapter(connection));
 		System.out.println("JettyServer: Got connection: " + sessionId);
 	}
 
@@ -34,6 +35,9 @@ public class JettyServerWebSocketProxy implements OnTextMessage {
 		try {
 			wampServer.handleIncomingMessage(sessionId, data);
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -1,10 +1,14 @@
 package fr.ocroquette.wampoc.server;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import fr.ocroquette.wampoc.common.Channel;
+import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.EventMessage;
 import fr.ocroquette.wampoc.messages.Message;
@@ -31,9 +35,11 @@ public class WampServer {
 		serverIdent = "<UNIDENTIFIED SERVER>";
 		subscriptions = new Subscriptions();
 		sessionIdFactory = new SessionIdFactory();
+		sessionLifeCycleListeners = Collections.synchronizedList(new ArrayList<SessionLifecycleListener>());
+
 	}
 
-	public SessionId addClient(Channel outgoingChannel) {
+	public SessionId connectClient(Channel outgoingChannel) {
 		SessionId sessionId = sessionIdFactory.getNew();
 		outgoingClientChannels.put(sessionId, outgoingChannel);
 		try {
@@ -43,11 +49,20 @@ public class WampServer {
 			return null;
 		}
 		
+		for(SessionLifecycleListener l: sessionLifeCycleListeners)
+			l.onCreation(sessionId);
+		
 		return sessionId;
 	}
 
-	public void handleIncomingMessage(SessionId sessionId, String jsonText) throws IOException {
+	public void handleIncomingMessage(SessionId sessionId, String jsonText) throws IOException, BadArgumentException {
 		Message message = MessageMapper.fromJson(jsonText);
+		if ( message == null ) {
+			throw new BadArgumentException("Could not parse the input jsonText");
+		}
+		if ( ! isValidSession(sessionId) ) {
+			throw new BadArgumentException("Unknown session " + sessionId);
+		}
 		switch(message.getType()) {
 		case CALL:
 			handleIncomingCallMessage(sessionId, (CallMessage)message);
@@ -62,8 +77,7 @@ public class WampServer {
 			handleIncomingPublishMessage(sessionId, (PublishMessage)message);
 			break;
 		default:
-			// TODO logging
-			System.err.println("ERROR: handleIncomingMessage doesn't know how to handle message type " + message.getType() );
+			throw new BadArgumentException("Unsupported message type: " + message.getType());
 		}
 	}
 
@@ -75,17 +89,18 @@ public class WampServer {
 		subscriptions.unsubscribe(sessionId, message.topicUri);
 	}
 
-	private void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException {
+	private void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException, BadArgumentException {
 		String procedureId = message.procedureId;
+		RpcCall rpcCall = new RpcCall(message);
 		RpcHandler handler= rpcHandlers.get(procedureId);
 		if ( handler != null ) {
-			RpcCall rpcCall = new RpcCall(message);
 			handler.execute(rpcCall);
 			sendMessageToClient(sessionId, rpcCall.getResultingJson());
 		}
-		else
-			// TODO
-			System.out.println("No handler registered for "+procedureId);
+		else {
+			rpcCall.setError("http://ocroquette.fr/noHandlerForProcedure", "No handler defined for " + procedureId);
+			sendMessageToClient(sessionId, rpcCall.getResultingJson());
+		}
 	}
 
 	private void handleIncomingPublishMessage(final SessionId sessionId, final PublishMessage message) throws IOException {
@@ -94,8 +109,13 @@ public class WampServer {
 		Subscriptions.ActionOnSubscriber action = new Subscriptions.ActionOnSubscriber() {
 			@Override
 			public void execute(SessionId subscriberClientId) {
-				if ( shallSendPublish(message.excludeMe, sessionId, subscriberClientId))
-					sendMessageToClient(subscriberClientId, MessageMapper.toJson(eventMessage));
+				if ( shallSendPublish(message.excludeMe, sessionId, subscriberClientId)) {
+					try {
+						sendMessageToClient(subscriberClientId, MessageMapper.toJson(eventMessage));
+					} catch (BadArgumentException e) {
+						// The session has been discarded in the meantime, there is not much we can do about it 
+					}
+				}
 			}
 		};
 		subscriptions.forAllSubscribers(message.topicUri, action);
@@ -105,7 +125,7 @@ public class WampServer {
 		return excludeMe == null || ! excludeMe.booleanValue() || from != to;
 	}
 
-	protected void sendMessageToClient(SessionId sessionId, String message) {
+	protected void sendMessageToClient(SessionId sessionId, String message) throws BadArgumentException {
 		Channel channel = outgoingClientChannels.get(sessionId);
 		if ( channel != null ) {
 			try {
@@ -113,25 +133,34 @@ public class WampServer {
 			}
 			catch(IOException e) {
 				// TODO
-				System.out.println("Looks like client " + sessionId + "is disconnecting. Discarding.");
-				deleteClient(sessionId);
+				System.out.println("Looks like client " + sessionId + " is not reachable anymore. Discarding.");
+				discardClient(sessionId);
 			}
 		}
 		else
-			// TODO
-			System.out.println("Cannot send to client, client ID unknown: "+sessionId);
+			throw new BadArgumentException("Unknown sessionId \"" + sessionId + "\"");
 	}
 
-	private void deleteClient(SessionId sessionId) {
+	public void discardClient(SessionId sessionId) {
 		outgoingClientChannels.remove(sessionId);
+		for(SessionLifecycleListener l: sessionLifeCycleListeners)
+			l.onDiscard(sessionId);
 	}
 
-
-	public void cancelAllSubscriptions(SessionId sessionId) {
+	public boolean isValidSession(SessionId sessionId) {
+		return outgoingClientChannels.get(sessionId) != null;
 	}
 
 	public void registerRpcHandler(String procedureId, RpcHandler rpcHandler) {
 		rpcHandlers.put(procedureId, rpcHandler);
+	}
+
+	public void addSessionLifecycleListener(SessionLifecycleListener listener) {
+		sessionLifeCycleListeners.add(listener);
+	}
+
+	public void removeSessionLifecycleListener(SessionLifecycleListener listener) {
+		sessionLifeCycleListeners.remove(listener);
 	}
 
 	protected Map<SessionId, Channel> outgoingClientChannels;
@@ -139,5 +168,6 @@ public class WampServer {
 	protected Subscriptions subscriptions;
 	protected String serverIdent;
 	protected SessionIdFactory sessionIdFactory;
+	protected List<SessionLifecycleListener> sessionLifeCycleListeners;
 
 }

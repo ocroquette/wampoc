@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.EventMessage;
 import fr.ocroquette.wampoc.messages.Message;
 import fr.ocroquette.wampoc.messages.MessageMapper;
@@ -20,19 +21,19 @@ public class ServerEventsTest {
 	final String serverIdent = "SERVER IDENT";
 
 	@Test
-	public void subscribeAndPublish() throws IOException {
+	public void subscribeAndPublish() throws IOException, BadArgumentException {
 		String payload = "Publish payload";
 		
 		WampServer server = new WampServer(serverIdent);
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.connectClient(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		SessionId clientId2 = server.addClient(channel2);
+		SessionId clientId2 = server.connectClient(channel2);
 		server.handleIncomingMessage(clientId2, MessageMapper.toJson(subscribeMessage));
 
 
@@ -57,14 +58,14 @@ public class ServerEventsTest {
 	}
 
 	@Test
-	public void unsubscribe() throws IOException {
+	public void unsubscribe() throws IOException, BadArgumentException {
 		String payload = "Publish payload";
 		
 		WampServer server = new WampServer(serverIdent);
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.addClient(channel1);
+		SessionId clientId1 = server.connectClient(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
 		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
 
