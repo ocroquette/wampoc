@@ -11,7 +11,7 @@ import fr.ocroquette.wampoc.common.Channel;
 import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
-import fr.ocroquette.wampoc.server.SessionId;
+import fr.ocroquette.wampoc.server.Session;
 
 
 public class JettyBasedServer 
@@ -47,9 +47,9 @@ public class JettyBasedServer
 		}
 		@Override
 		public void run() {
-			SessionId clientId;
+			Session session;
 			try {
-				clientId = server.connectClient(new Channel() {
+				session = server.openSession(new Channel() {
 					@Override
 					public void handle(String message) throws IOException {
 					}});
@@ -60,7 +60,7 @@ public class JettyBasedServer
 					try {
 						Thread.sleep(5000);
 						System.out.println("Postman says:"+json);
-						server.handleIncomingMessage(clientId, json);
+						server.handleIncomingString(session, json);
 					} catch (InterruptedException e) {
 						return;
 					} catch (BadArgumentException e) {

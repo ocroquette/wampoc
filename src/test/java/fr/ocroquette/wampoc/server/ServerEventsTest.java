@@ -13,7 +13,7 @@ import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
-import fr.ocroquette.wampoc.server.SessionId;
+import fr.ocroquette.wampoc.server.Session;
 import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
@@ -28,20 +28,20 @@ public class ServerEventsTest {
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.connectClient(channel1);
+		Session session1 = server.openSession(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
+		server.handleIncomingMessage(session1, subscribeMessage);
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		SessionId clientId2 = server.connectClient(channel2);
-		server.handleIncomingMessage(clientId2, MessageMapper.toJson(subscribeMessage));
+		Session session2 = server.openSession(channel2);
+		server.handleIncomingMessage(session2, subscribeMessage);
 
 
 		PublishMessage publishMessage = new PublishMessage(topicId);
 		publishMessage.setPayload(payload);
 
 		// System.out.println(MessageMapper.toJson(publishMessage));
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(publishMessage));
+		server.handleIncomingMessage(session1, publishMessage);
 
 		assertEquals(2, channel1.handledMessages.size());
 		assertEquals(2, channel2.handledMessages.size());
@@ -52,7 +52,7 @@ public class ServerEventsTest {
 		assertEquals(payload, eventMessage.getPayload(String.class));
 		
 		publishMessage.excludeMe = true;
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(publishMessage));
+		server.handleIncomingMessage(session1, publishMessage);
 		assertEquals(2, channel1.handledMessages.size());
 		assertEquals(3, channel2.handledMessages.size());
 	}
@@ -65,21 +65,21 @@ public class ServerEventsTest {
 		String topicId = "http://host/topicId";
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.connectClient(channel1);
+		Session session1 = server.openSession(channel1);
 		SubscribeMessage subscribeMessage = new SubscribeMessage(topicId);
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(subscribeMessage));
+		server.handleIncomingMessage(session1, subscribeMessage);
 
 		PublishMessage publishMessage = new PublishMessage(topicId);
 		publishMessage.setPayload(payload);
 
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(publishMessage));
+		server.handleIncomingMessage(session1, publishMessage);
 		assertEquals(2, channel1.handledMessages.size());
 		assertEquals("[8,\"http://host/topicId\",\"Publish payload\"]", channel1.last());
 
 		UnsubscribeMessage unsubscribeMessage = new UnsubscribeMessage(topicId);
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(unsubscribeMessage));
+		server.handleIncomingMessage(session1, unsubscribeMessage);
 
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(publishMessage));
+		server.handleIncomingMessage(session1, publishMessage);
 		assertEquals(2, channel1.handledMessages.size());
 	}
 }

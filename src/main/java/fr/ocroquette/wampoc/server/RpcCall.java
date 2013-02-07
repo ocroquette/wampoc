@@ -13,7 +13,7 @@ import fr.ocroquette.wampoc.messages.MessageMapper;
  *
  */
 public class RpcCall {
-	public RpcCall(SessionId sessionId, CallMessage msg) {
+	public RpcCall(String sessionId, CallMessage msg) {
 		callMessage = msg;
 		this.sessionId = sessionId;
 	}
@@ -46,7 +46,7 @@ public class RpcCall {
 		return hasFailed;
 	}
 
-	public SessionId getOriginatingSession() {
+	public String getOriginatingSession() {
 		return sessionId;
 	}
 	
@@ -74,6 +74,6 @@ public class RpcCall {
 	protected String errorUri;
 	protected String errorDesc;
 	protected JsonElement errorDetails;
-	protected SessionId sessionId;
+	protected String sessionId;
 
 }

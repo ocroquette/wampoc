@@ -14,7 +14,7 @@ import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 import fr.ocroquette.wampoc.messages.Message;
 import fr.ocroquette.wampoc.messages.MessageMapper;
-import fr.ocroquette.wampoc.server.SessionId;
+import fr.ocroquette.wampoc.server.Session;
 import fr.ocroquette.wampoc.server.RpcCall;
 import fr.ocroquette.wampoc.server.RpcHandler;
 import fr.ocroquette.wampoc.server.WampServer;
@@ -33,10 +33,10 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		SessionId clientId = server.connectClient(channel);
+		Session session = server.openSession(channel);
 
 		CallMessage callMessage = newCallMessage(procedureId, new MyRpcInputPayload());
-		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
+		server.handleIncomingMessage(session, callMessage);
 
 		assertEquals(2, channel.handledMessages.size());
 
@@ -60,18 +60,18 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel1 = new ProtocollingChannel();
-		SessionId clientId1 = server.connectClient(channel1);
+		Session session1 = server.openSession(channel1);
 
 		ProtocollingChannel channel2 = new ProtocollingChannel();
-		SessionId clientId2 = server.connectClient(channel2);
+		Session session2 = server.openSession(channel2);
 
 		CallMessage callMessage = newCallMessage(procedureId, new MyRpcInputPayload());
-		server.handleIncomingMessage(clientId1, MessageMapper.toJson(callMessage));
+		server.handleIncomingMessage(session1, callMessage);
 
 		assertEquals(2, channel1.handledMessages.size());
 		assertEquals(1, channel2.handledMessages.size());
 
-		server.handleIncomingMessage(clientId2, MessageMapper.toJson(callMessage));
+		server.handleIncomingMessage(session2, callMessage);
 
 		assertEquals(2, channel2.handledMessages.size());
 	}
@@ -88,12 +88,12 @@ public class ServerRpcHandlingTest {
 		server.registerRpcHandler(procedureId, myTestRpcHandler());
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		SessionId clientId = server.connectClient(channel);
+		Session session = server.openSession(channel);
 
 		MyRpcInputPayload input = new MyRpcInputPayload();
 		input.pleaseFail("http://error.com", "Error description", "Error details");
 		CallMessage callMessage = newCallMessage(procedureId, input);
-		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
+		server.handleIncomingMessage(session, callMessage);
 
 		assertEquals(2, channel.handledMessages.size());
 
@@ -112,10 +112,10 @@ public class ServerRpcHandlingTest {
 		String procedureId = "http://host/procedureId";
 
 		ProtocollingChannel channel = new ProtocollingChannel();
-		SessionId clientId = server.connectClient(channel);
+		Session session = server.openSession(channel);
 
 		CallMessage callMessage = newCallMessage(procedureId, null);
-		server.handleIncomingMessage(clientId, MessageMapper.toJson(callMessage));
+		server.handleIncomingMessage(session, callMessage);
 
 		assertEquals(2, channel.handledMessages.size());
 

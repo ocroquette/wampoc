@@ -1,5 +1,6 @@
 package fr.ocroquette.wampoc.server;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -11,6 +12,7 @@ import org.junit.Test;
 import fr.ocroquette.wampoc.exceptions.BadArgumentException;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.WelcomeMessage;
+import fr.ocroquette.wampoc.testutils.ErrorChannel;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
 public class ServerTest {
@@ -21,9 +23,11 @@ public class ServerTest {
 		WampServer server = new WampServer(serverIdent);
 		ProtocollingChannel channel = new ProtocollingChannel(); 
 		assertEquals(0, channel.handledMessages.size());
-		server.connectClient(channel);
+		Session session = server.openSession(channel);
 		assertEquals(1, channel.handledMessages.size());
 		WelcomeMessage welcomeMessage = (WelcomeMessage) MessageMapper.fromJson(channel.handledMessages.get(0));
+
+		assertTrue(session.isOpen());
 
 		assertTrue("Welcome message from the server must be valid", welcomeMessage.isValid());
 		assertEquals(serverIdent, welcomeMessage.serverIdent);
@@ -36,15 +40,25 @@ public class ServerTest {
 		String serverIdent = UUID.randomUUID().toString();
 		WampServer server = new WampServer(serverIdent);
 		ProtocollingChannel channel = new ProtocollingChannel(); 
-		SessionId sessionId = server.connectClient(channel);
-		server.handleIncomingMessage(sessionId, "[]");
+		Session session = server.openSession(channel);
+		server.handleIncomingString(session, "[]");
 	}
 
 	@Test(expected=BadArgumentException.class)
-	public void invalidSessionId() throws IOException, BadArgumentException {
+	public void invalidSession() throws IOException, BadArgumentException {
 		String serverIdent = UUID.randomUUID().toString();
 		WampServer server = new WampServer(serverIdent);
-		SessionId sessionId = new SessionId("invalid session id");
-		server.handleIncomingMessage(sessionId, "[7, \"http://example.com/simple\", \"Hello, world!\"]");
+		ProtocollingChannel channel = new ProtocollingChannel(); 
+		Session session = new Session(channel);
+		server.handleIncomingString(session, "[7, \"http://example.com/simple\", \"Hello, world!\"]");
+	}
+
+	@Test
+	public void connectionInterrupted()  {
+		String serverIdent = UUID.randomUUID().toString();
+		WampServer server = new WampServer(serverIdent);
+		ErrorChannel channel = new ErrorChannel(); 
+		Session session = server.openSession(channel);
+		assertFalse(session.isOpen());
 	}
 }

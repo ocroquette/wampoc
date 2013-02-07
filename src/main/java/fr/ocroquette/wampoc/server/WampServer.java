@@ -1,9 +1,6 @@
 package fr.ocroquette.wampoc.server;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,96 +23,93 @@ public class WampServer {
 
 	public WampServer(String serverIdent) {
 		init();
-		this.serverIdent =serverIdent; 
+		this.serverIdent = serverIdent; 
 	}
 
 	protected void init() {
-		outgoingClientChannels = new ConcurrentHashMap<SessionId, Channel>();
+		openSessions = new ConcurrentHashMap<String, Session>();
 		rpcHandlers = new ConcurrentHashMap<String, RpcHandler>();
 		serverIdent = "<UNIDENTIFIED SERVER>";
 		subscriptions = new Subscriptions();
-		sessionIdFactory = new SessionIdFactory();
-		sessionLifeCycleListeners = Collections.synchronizedList(new ArrayList<SessionLifecycleListener>());
-
+		sessionFactory = new SessionFactory();
 	}
 
-	public SessionId connectClient(Channel outgoingChannel) {
-		SessionId sessionId = sessionIdFactory.getNew();
-		outgoingClientChannels.put(sessionId, outgoingChannel);
-		try {
-			outgoingChannel.handle(MessageMapper.toJson(new WelcomeMessage(sessionId.toString(), serverIdent)));
-		} catch (IOException e) {
-			// How sad: we could not even greet this client
-			return null;
-		}
-		
-		for(SessionLifecycleListener l: sessionLifeCycleListeners)
-			l.onCreation(sessionId);
-		
-		return sessionId;
+	public Session openSession(Channel outgoingChannel) {
+		Session session = sessionFactory.getNew(outgoingChannel);
+		openSessions.put(session.getId(), session);
+		sendMessageToClient(session, MessageMapper.toJson(new WelcomeMessage(session.getId(), serverIdent)));
+		return session;
 	}
 
-	public void handleIncomingMessage(SessionId sessionId, String jsonText) throws IOException, BadArgumentException {
+	public void closeSession(Session session) {
+		openSessions.remove(session);
+		session.close();
+	}
+
+	public void handleIncomingString(Session session, String jsonText) throws IOException, BadArgumentException {
 		Message message = MessageMapper.fromJson(jsonText);
 		if ( message == null ) {
 			throw new BadArgumentException("Could not parse the input jsonText");
 		}
-		handleIncomingMessage(sessionId, message);
+		handleIncomingMessage(session, message);
 	}
 
-	public void handleIncomingMessage(SessionId sessionId, Message message) throws IOException, BadArgumentException {
-		if ( ! isValidSession(sessionId) ) {
-			throw new BadArgumentException("Unknown session " + sessionId);
+	public void handleIncomingMessage(Session session, Message message) throws IOException, BadArgumentException {
+		if ( ! isValidSession(session) ) {
+			throw new BadArgumentException("Invalid session " + session);
 		}
 		switch(message.getType()) {
 		case CALL:
-			handleIncomingCallMessage(sessionId, (CallMessage)message);
+			handleIncomingCallMessage(session, (CallMessage)message);
 			break;
 		case SUBSCRIBE:
-			handleIncomingSubscribeMessage(sessionId, (SubscribeMessage)message);
+			handleIncomingSubscribeMessage(session, (SubscribeMessage)message);
 			break;
 		case UNSUBSCRIBE:
-			handleIncomingUnsubscribeMessage(sessionId, (UnsubscribeMessage)message);
+			handleIncomingUnsubscribeMessage(session, (UnsubscribeMessage)message);
 			break;
 		case PUBLISH:
-			handleIncomingPublishMessage(sessionId, (PublishMessage)message);
+			handleIncomingPublishMessage(session, (PublishMessage)message);
 			break;
 		default:
 			throw new BadArgumentException("Unsupported message type: " + message.getType());
 		}
 	}
 
-	protected void handleIncomingSubscribeMessage(SessionId sessionId, SubscribeMessage message) {
-		subscriptions.subscribe(sessionId, message.topicUri);
+	protected void handleIncomingSubscribeMessage(Session session, SubscribeMessage message) {
+		subscriptions.subscribe(session.getId(), message.topicUri);
 	}
 
-	protected void handleIncomingUnsubscribeMessage(SessionId sessionId, UnsubscribeMessage message) {
-		subscriptions.unsubscribe(sessionId, message.topicUri);
+	protected void handleIncomingUnsubscribeMessage(Session session, UnsubscribeMessage message) {
+		subscriptions.unsubscribe(session.getId(), message.topicUri);
 	}
 
-	protected void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException, BadArgumentException {
+	protected void handleIncomingCallMessage(Session session, CallMessage message) throws IOException, BadArgumentException {
 		String procedureId = message.procedureId;
-		RpcCall rpcCall = new RpcCall(sessionId, message);
+		RpcCall rpcCall = new RpcCall(session.getId(), message);
 		RpcHandler handler= rpcHandlers.get(procedureId);
 		if ( handler != null ) {
 			handler.execute(rpcCall);
-			sendMessageToClient(sessionId, rpcCall.getCallResultAsJson());
+			sendMessageToClient(session, rpcCall.getCallResultAsJson());
 		}
 		else {
 			rpcCall.setError("http://ocroquette.fr/noHandlerForProcedure", "No handler defined for " + procedureId);
-			sendMessageToClient(sessionId, rpcCall.getCallResultAsJson());
+			sendMessageToClient(session, rpcCall.getCallResultAsJson());
 		}
 	}
 
-	protected void handleIncomingPublishMessage(final SessionId sessionId, final PublishMessage message) throws IOException {
-		final EventMessage eventMessage = new EventMessage(message.topicUri);
+	protected void handleIncomingPublishMessage(final Session session, final PublishMessage message) throws IOException {
+
+		EventMessage eventMessage = new EventMessage(message.topicUri);
 		eventMessage.setPayload(message.payload);
+		final String eventMessageJson = MessageMapper.toJson(eventMessage);
+
 		Subscriptions.ActionOnSubscriber action = new Subscriptions.ActionOnSubscriber() {
 			@Override
-			public void execute(SessionId subscriberClientId) {
-				if ( shallSendPublish(message.excludeMe, sessionId, subscriberClientId)) {
+			public void execute(String subscriberClientId) {
+				if ( shallSendPublish(message.excludeMe, session.getId(), subscriberClientId)) {
 					try {
-						sendMessageToClient(subscriberClientId, MessageMapper.toJson(eventMessage));
+						sendMessageToClient(getSession(subscriberClientId), eventMessageJson);
 					} catch (BadArgumentException e) {
 						// The session has been discarded in the meantime, there is not much we can do about it 
 					}
@@ -125,53 +119,48 @@ public class WampServer {
 		subscriptions.forAllSubscribers(message.topicUri, action);
 	}
 
-	protected boolean shallSendPublish(Boolean excludeMe, SessionId from, SessionId to) {
+	protected boolean shallSendPublish(Boolean excludeMe, String from, String to) {
 		return excludeMe == null || ! excludeMe.booleanValue() || from != to;
 	}
 
-	protected void sendMessageToClient(SessionId sessionId, String message) throws BadArgumentException {
-		Channel channel = outgoingClientChannels.get(sessionId);
-		if ( channel != null ) {
-			try {
-				channel.handle(message);
-			}
-			catch(IOException e) {
-				// TODO
-				System.out.println("Looks like client " + sessionId + " is not reachable anymore. Discarding.");
-				discardClient(sessionId);
-			}
+	protected void sendMessageToClient(Session session, String message) {
+		try {
+			session.sendMessage(message);
 		}
-		else
-			throw new BadArgumentException("Unknown sessionId \"" + sessionId + "\"");
+		catch(IOException e) {
+			// TODO
+			System.out.println("Looks like client " + session + " is not reachable anymore. Discarding.");
+			closeSession(session);
+		}
 	}
 
-	public void discardClient(SessionId sessionId) {
-		outgoingClientChannels.remove(sessionId);
-		for(SessionLifecycleListener l: sessionLifeCycleListeners)
-			l.onDiscard(sessionId);
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
 	}
 
-	public boolean isValidSession(SessionId sessionId) {
-		return outgoingClientChannels.get(sessionId) != null;
+	public Session getSession(String sessionId) throws BadArgumentException {
+		Session s = openSessions.get(sessionId);
+		if (s == null )
+			throw new BadArgumentException("Unknown session id: " + sessionId);
+		return s;
 	}
+
+	public boolean isValidSession(Session session) {
+		return openSessions.containsValue(session);
+	}
+
+	public boolean isValidSession(String sessionId) {
+		return openSessions.containsKey(sessionId);
+	}
+
 
 	public void registerRpcHandler(String procedureId, RpcHandler rpcHandler) {
 		rpcHandlers.put(procedureId, rpcHandler);
 	}
 
-	public void addSessionLifecycleListener(SessionLifecycleListener listener) {
-		sessionLifeCycleListeners.add(listener);
-	}
-
-	public void removeSessionLifecycleListener(SessionLifecycleListener listener) {
-		sessionLifeCycleListeners.remove(listener);
-	}
-
-	protected Map<SessionId, Channel> outgoingClientChannels;
+	protected Map<String, Session> openSessions;
 	protected Map<String, RpcHandler> rpcHandlers;
 	protected Subscriptions subscriptions;
 	protected String serverIdent;
-	protected SessionIdFactory sessionIdFactory;
-	protected List<SessionLifecycleListener> sessionLifeCycleListeners;
-
+	protected SessionFactory sessionFactory;
 }
