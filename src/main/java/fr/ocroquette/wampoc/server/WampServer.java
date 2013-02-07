@@ -60,6 +60,10 @@ public class WampServer {
 		if ( message == null ) {
 			throw new BadArgumentException("Could not parse the input jsonText");
 		}
+		handleIncomingMessage(sessionId, message);
+	}
+
+	public void handleIncomingMessage(SessionId sessionId, Message message) throws IOException, BadArgumentException {
 		if ( ! isValidSession(sessionId) ) {
 			throw new BadArgumentException("Unknown session " + sessionId);
 		}
@@ -81,29 +85,29 @@ public class WampServer {
 		}
 	}
 
-	private void handleIncomingSubscribeMessage(SessionId sessionId, SubscribeMessage message) {
+	protected void handleIncomingSubscribeMessage(SessionId sessionId, SubscribeMessage message) {
 		subscriptions.subscribe(sessionId, message.topicUri);
 	}
 
-	private void handleIncomingUnsubscribeMessage(SessionId sessionId, UnsubscribeMessage message) {
+	protected void handleIncomingUnsubscribeMessage(SessionId sessionId, UnsubscribeMessage message) {
 		subscriptions.unsubscribe(sessionId, message.topicUri);
 	}
 
-	private void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException, BadArgumentException {
+	protected void handleIncomingCallMessage(SessionId sessionId, CallMessage message) throws IOException, BadArgumentException {
 		String procedureId = message.procedureId;
-		RpcCall rpcCall = new RpcCall(message);
+		RpcCall rpcCall = new RpcCall(sessionId, message);
 		RpcHandler handler= rpcHandlers.get(procedureId);
 		if ( handler != null ) {
 			handler.execute(rpcCall);
-			sendMessageToClient(sessionId, rpcCall.getResultingJson());
+			sendMessageToClient(sessionId, rpcCall.getCallResultAsJson());
 		}
 		else {
 			rpcCall.setError("http://ocroquette.fr/noHandlerForProcedure", "No handler defined for " + procedureId);
-			sendMessageToClient(sessionId, rpcCall.getResultingJson());
+			sendMessageToClient(sessionId, rpcCall.getCallResultAsJson());
 		}
 	}
 
-	private void handleIncomingPublishMessage(final SessionId sessionId, final PublishMessage message) throws IOException {
+	protected void handleIncomingPublishMessage(final SessionId sessionId, final PublishMessage message) throws IOException {
 		final EventMessage eventMessage = new EventMessage(message.topicUri);
 		eventMessage.setPayload(message.payload);
 		Subscriptions.ActionOnSubscriber action = new Subscriptions.ActionOnSubscriber() {
@@ -121,7 +125,7 @@ public class WampServer {
 		subscriptions.forAllSubscribers(message.topicUri, action);
 	}
 
-	private boolean shallSendPublish(Boolean excludeMe, SessionId from, SessionId to) {
+	protected boolean shallSendPublish(Boolean excludeMe, SessionId from, SessionId to) {
 		return excludeMe == null || ! excludeMe.booleanValue() || from != to;
 	}
 
