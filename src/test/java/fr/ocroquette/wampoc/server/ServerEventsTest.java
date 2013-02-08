@@ -13,8 +13,6 @@ import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
-import fr.ocroquette.wampoc.server.Session;
-import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
 public class ServerEventsTest {

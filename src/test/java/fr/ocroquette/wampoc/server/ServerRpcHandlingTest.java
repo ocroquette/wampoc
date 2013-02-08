@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
-
 import org.junit.Test;
 
 import fr.ocroquette.wampoc.exceptions.BadArgumentException;
@@ -14,10 +13,6 @@ import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 import fr.ocroquette.wampoc.messages.Message;
 import fr.ocroquette.wampoc.messages.MessageMapper;
-import fr.ocroquette.wampoc.server.Session;
-import fr.ocroquette.wampoc.server.RpcCall;
-import fr.ocroquette.wampoc.server.RpcHandler;
-import fr.ocroquette.wampoc.server.WampServer;
 import fr.ocroquette.wampoc.testutils.ProtocollingChannel;
 
 public class ServerRpcHandlingTest {

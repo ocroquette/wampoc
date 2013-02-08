@@ -1,8 +1,6 @@
 package fr.ocroquette.wampoc.testutils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import fr.ocroquette.wampoc.common.Channel;
 

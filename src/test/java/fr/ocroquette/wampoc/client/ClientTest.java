@@ -1,14 +1,12 @@
 package fr.ocroquette.wampoc.client;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.UUID;
 
 import org.junit.Test;
-
-import com.google.gson.Gson;
 
 import fr.ocroquette.wampoc.common.Channel;
 import fr.ocroquette.wampoc.messages.CallMessage;

@@ -32,5 +32,6 @@ public class JettyClient {
 	}
 
 	private JettyClientAdapter jettyClientAdapter;
+	@SuppressWarnings("unused")
 	private WebSocket.Connection connection;
 }
