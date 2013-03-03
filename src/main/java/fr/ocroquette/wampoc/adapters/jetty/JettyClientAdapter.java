@@ -9,6 +9,9 @@ public class JettyClientAdapter implements WebSocket.OnTextMessage {
 	public void onOpen(Connection connection) {
 		client = new WampClient(new ChannelToConnectionAdapter(connection));
 		System.out.println("JettyClientAdapter:onOpen " + client);
+		// Jetty doesn't count our traffic as such, and therefore always close
+		// the connection after this time. As a workaround, we use a huge value
+		connection.setMaxIdleTime(7*24*3600*1000);
 	}
 
 	@Override
@@ -28,4 +31,3 @@ public class JettyClientAdapter implements WebSocket.OnTextMessage {
 	private WampClient client;
 
 }
-
