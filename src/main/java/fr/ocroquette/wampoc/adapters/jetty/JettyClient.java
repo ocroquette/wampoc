@@ -1,5 +1,6 @@
 package fr.ocroquette.wampoc.adapters.jetty;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -11,20 +12,24 @@ import fr.ocroquette.wampoc.client.WampClient;
 
 public class JettyClient {
 
-	public void connect(URI uri, String protocol) throws Exception {
+	public void connect(URI uri, String protocol) throws IOException {
 
 		WebSocketClientFactory factory = new WebSocketClientFactory();
 		try {
 			factory.start();
 		} catch (Exception e) {
-			throw new Exception("Failed to start the WebSocketClientFactory");
+			throw new IOException("Failed to start the WebSocketClientFactory");
 		}
 
 		WebSocketClient client = factory.newWebSocketClient();
 		client.setProtocol(protocol);
 
 		jettyClientAdapter = new JettyClientAdapter();
-		connection = client.open(uri, jettyClientAdapter).get(5, TimeUnit.SECONDS);
+		try {
+			connection = client.open(uri, jettyClientAdapter).get(5, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			throw new IOException("Failed to open the URI: " + uri, e);
+		}
 	}
 
 	public WampClient getWampClient() {
