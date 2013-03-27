@@ -1,6 +1,8 @@
 package fr.ocroquette.wampoc.server;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,6 +57,8 @@ public class WampServer {
 	}
 
 	public void handleIncomingMessage(Session session, Message message) throws IOException, BadArgumentException {
+		if ( incomingFrameEavesDropper.size() > 0)
+			notifyIncomingFramesEavesdroppers(session.getId(), MessageMapper.toJson(message));
 		if ( ! isValidSession(session) ) {
 			throw new BadArgumentException("Invalid session " + session);
 		}
@@ -158,9 +162,24 @@ public class WampServer {
 		rpcHandlers.put(procedureId, rpcHandler);
 	}
 
+	public void addIncomingFramesEavesdropper(TextFrameEavesdropper incomingEavesdropper) {
+		incomingFrameEavesDropper.add(incomingEavesdropper);
+	}
+
+	public void removeIncomingFramesEavesdropper(TextFrameEavesdropper incomingEavesdropper) {
+		incomingFrameEavesDropper.remove(incomingEavesdropper);
+	}
+
+	public void notifyIncomingFramesEavesdroppers(String session, String frame) {
+		for ( TextFrameEavesdropper eavesdropper : incomingFrameEavesDropper )
+			eavesdropper.handler(session, frame);
+	}
+
+
 	protected Map<String, Session> openSessions;
 	protected Map<String, RpcHandler> rpcHandlers;
 	protected Subscriptions subscriptions;
 	protected String serverIdent;
 	protected SessionFactory sessionFactory;
+	protected List<TextFrameEavesdropper> incomingFrameEavesDropper = new ArrayList<TextFrameEavesdropper>();
 }

@@ -23,7 +23,7 @@ public class Session {
 	}
 
 	protected String generateId() {
-		return (UUID.randomUUID() + "-" + UUID.randomUUID()).replace("-", "");
+		return UUID.randomUUID().toString().replace("-", "");
 	}
 
 	public Channel getChannel() {
