@@ -70,7 +70,7 @@ public class CallMessage extends Message {
 		return gson.fromJson(payload, type);
 	}
 
-	public <PayloadType> void setPayload(PayloadType payload, Class<PayloadType> type) {
+	public void setPayload(Object payload) {
 		Gson gson = new Gson();
 		this.payload = gson.toJsonTree(payload);
 	}

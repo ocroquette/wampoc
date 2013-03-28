@@ -23,17 +23,19 @@ public class WampClient {
 	public String serverIdent;
 	public String sessionId;
 	protected Channel outgoingChannel;
-	Map<String, RpcResultReceiver> rpcResultReceivers;
-	Map<String, EventReceiver> eventReceivers;
+	protected Map<String, RpcResultReceiver> rpcResultReceivers;
+	protected Map<String, EventReceiver> eventReceivers;
+	protected WelcomeListener welcomeListener;
 
 	public WampClient(Channel outgoingChannel) {
-		init();
+		reset();
 		this.outgoingChannel = outgoingChannel;
 	}
 
-	protected void init() {
+	public void reset() {
 		rpcResultReceivers = new HashMap<String, RpcResultReceiver>();
 		eventReceivers = new HashMap<String, EventReceiver>();
+		hasBeenWelcomed = false;
 	}
 	
 	public void handleIncomingMessage(String jsonText) {
@@ -75,6 +77,8 @@ public class WampClient {
 		serverIdent = message.serverIdent; 
 		sessionId = message.sessionId;
 		hasBeenWelcomed = true;
+		if ( welcomeListener != null )
+			welcomeListener.onWelcome();
 	}
 
 	protected void handleIncomingCallResultMessage(CallResultMessage message) {
@@ -129,13 +133,13 @@ public class WampClient {
 		outgoingChannel.handle(MessageMapper.toJson(new CallMessage(callId, procedureId)));
 	}
 
-	public <PayloadType> void call(String procedureId, RpcResultReceiver rpcResultHandler, PayloadType payload, Class<PayloadType> payloadType) throws IOException {
+	public void call(String procedureId, RpcResultReceiver rpcResultHandler, Object payload) throws IOException {
 		String callId = UUID.randomUUID().toString();
 		synchronized(rpcResultReceivers) {
 			rpcResultReceivers.put(callId, rpcResultHandler);
 		}
 		CallMessage msg = new CallMessage(callId, procedureId);
-		msg.setPayload(payload, payloadType);
+		msg.setPayload(payload);
 		outgoingChannel.handle(MessageMapper.toJson(msg));
 	}
 
@@ -151,6 +155,10 @@ public class WampClient {
 			eventReceivers.remove(topicId);
 		}
 		outgoingChannel.handle(MessageMapper.toJson(new UnsubscribeMessage(topicId)));
+	}
+
+	public void setWelcomeListener(WelcomeListener welcomeListener) {
+		this.welcomeListener = welcomeListener;
 	}
 
 

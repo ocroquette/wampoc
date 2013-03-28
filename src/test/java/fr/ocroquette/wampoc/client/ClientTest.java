@@ -42,6 +42,14 @@ public class ClientTest {
 	}
 
 
+	static class MyWelcomeListener implements WelcomeListener {
+		public int count = 0;
+		@Override
+		public void onWelcome() {
+			count++;
+		}
+	};
+
 	@Test
 	public void handleWelcomeMessage() {
 		ProtocollingChannel channel = new ProtocollingChannel();
@@ -49,10 +57,14 @@ public class ClientTest {
 		String sessionId = UUID.randomUUID().toString();
 		String serverIndent = UUID.randomUUID().toString();
 		assertEquals(false, client.hasBeenWelcomed());
+		
+		MyWelcomeListener welcomeListener = new MyWelcomeListener();
+		client.setWelcomeListener(welcomeListener);
 		client.handleIncomingMessage("[0, \"" + sessionId + "\" , 1, \"" + serverIndent + "\"]");
 		assertEquals(serverIndent, client.getServerIdent());
 		assertEquals(serverIndent, client.getServerIdent());
 		assertEquals(sessionId, client.getSessionId());
+		assertEquals(1, welcomeListener.count);
 	}
 
 	@Test(expected=IllegalStateException.class)
@@ -113,7 +125,7 @@ public class ClientTest {
 		WampClient client = newClient(channel);
 		ProtocollingRpcResultReceiver rpcResultReciever = new ProtocollingRpcResultReceiver();
 		String payload = UUID.randomUUID().toString();
-		client.call(procedureId, rpcResultReciever, payload, String.class);
+		client.call(procedureId, rpcResultReciever, payload);
 		assertEquals(1, channel.handledMessages.size());
 		assertTrue(channel.last().matches("^\\[2,\"[^\"]+\",\"http://host/handleRpcCycle\",\"" + payload + "\"\\]$"));
 		String callId = getCallId(channel.handledMessages.get(0));

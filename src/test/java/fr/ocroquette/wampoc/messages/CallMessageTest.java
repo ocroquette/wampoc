@@ -40,11 +40,11 @@ public class CallMessageTest implements TestsNotToForget {
 		SimplePayload payload1 = new SimplePayload("String", 1); 
 		SimplePayload payload1bis = new SimplePayload("String", 1); 
 		SimplePayload payload2 = new SimplePayload("String", 2); 
-		msg1.setPayload(payload1, SimplePayload.class);
+		msg1.setPayload(payload1);
 		assertFalse(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload1bis, SimplePayload.class);
+		msg1bis.setPayload(payload1bis);
 		assertTrue(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload2, SimplePayload.class);
+		msg1bis.setPayload(payload2);
 		assertFalse(msg1.equals(msg1bis));
 	}
 
@@ -65,8 +65,8 @@ public class CallMessageTest implements TestsNotToForget {
 	@Test
 	public void unserializeWithPrimitivePayload() {
 		CallMessage msg = randomCallMessage();
-		int payload = new Random().nextInt(); 
-		msg.setPayload(payload, Integer.class);
+		Integer payload = new Random().nextInt(); 
+		msg.setPayload(payload);
 		String json = MessageMapper.toJson(msg);
 		assertEquals("[2," + q(msg.callId) + ","+q(msg.procedureId)+","+payload+"]", json);
 
@@ -85,7 +85,7 @@ public class CallMessageTest implements TestsNotToForget {
 	public void unserializeWithComplexPayload() {
 		CallMessage msg = randomCallMessage();
 		SimplePayload payload = new SimplePayload(rndStr(), new Random().nextInt() );
-		msg.setPayload(payload, SimplePayload.class);
+		msg.setPayload(payload);
 		String json = MessageMapper.toJson(msg);
 		assertEquals("[2," + q(msg.callId) + ","+q(msg.procedureId)+",{\"s\":"+q(payload.s)+",\"i\":"+payload.i+"}]", json);
 
@@ -97,7 +97,7 @@ public class CallMessageTest implements TestsNotToForget {
 	public void unserializeWithNullPayload() {
 		CallMessage msg = randomCallMessage();
 		SimplePayload payload = null;
-		msg.setPayload(payload, SimplePayload.class);
+		msg.setPayload(payload);
 		String json = MessageMapper.toJson(msg);
 		assertEquals("[2," + q(msg.callId) + ","+q(msg.procedureId)+",null]", json);
 

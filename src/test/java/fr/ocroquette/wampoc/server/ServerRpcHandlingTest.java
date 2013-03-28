@@ -172,7 +172,7 @@ public class ServerRpcHandlingTest {
 		CallMessage callMessage = new CallMessage();
 		callMessage.callId = "Dns3wuQo0ipOX1Xc";
 		callMessage.procedureId = procedureId;
-		callMessage.setPayload(input, MyRpcInputPayload.class);
+		callMessage.setPayload(input);
 		return callMessage;
 	}
 }
