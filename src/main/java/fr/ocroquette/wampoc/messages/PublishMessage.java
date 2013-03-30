@@ -2,8 +2,8 @@ package fr.ocroquette.wampoc.messages;
 
 import java.lang.reflect.Type;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
