@@ -88,6 +88,30 @@ public class CallErrorMessage extends Message {
 		this.errorDetails = gson.toJsonTree(errorDetails);
 	}
 
+	public String getCallId() {
+		return callId;
+	}
+
+	public void setCallId(String callId) {
+		this.callId = callId;
+	}
+
+	public String getErrorUri() {
+		return errorUri;
+	}
+
+	public void setErrorUri(String errorUri) {
+		this.errorUri = errorUri;
+	}
+
+	public String getErrorDesc() {
+		return errorDesc;
+	}
+
+	public void setErrorDesc(String errorDesc) {
+		this.errorDesc = errorDesc;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		return EqualsBuilder.reflectionEquals(this, obj);
@@ -96,4 +120,5 @@ public class CallErrorMessage extends Message {
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
 	}
+
 }

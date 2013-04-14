@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.JsonSyntaxException;
 
 
 public class CallMessage extends Message {
@@ -29,7 +30,7 @@ public class CallMessage extends Message {
 		this.callId = callId;
 		this.procedureId = procedureId;
 	}
-	
+
 	public static class Serializer implements JsonSerializer<CallMessage> {
 		@Override
 		public JsonElement serialize(CallMessage msg, Type arg1,
@@ -67,7 +68,12 @@ public class CallMessage extends Message {
 		if ( payload == null )
 			return null;
 		Gson gson = new Gson();
-		return gson.fromJson(payload, type);
+		try {
+			return gson.fromJson(payload, type);
+		}
+		catch(JsonSyntaxException e) {
+			return null;
+		}
 	}
 
 	public void setPayload(Object payload) {

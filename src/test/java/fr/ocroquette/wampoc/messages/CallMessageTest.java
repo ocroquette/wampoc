@@ -74,8 +74,8 @@ public class CallMessageTest implements TestsNotToForget {
 		assertEquals(msg, clone);
 
 		try {
-			clone.getPayload(SimplePayload.class);
-			assertTrue("getPayload shall throw an exception in case of wrong type", false);
+			SimplePayload p = clone.getPayload(SimplePayload.class);
+			assertEquals("getPayload shall return null in case of wrong type", null, p);
 		}
 		catch(Exception e) {
 		}
