@@ -7,6 +7,7 @@ import fr.ocroquette.wampoc.messages.CallErrorMessage;
 import fr.ocroquette.wampoc.messages.CallMessage;
 import fr.ocroquette.wampoc.messages.CallResultMessage;
 import fr.ocroquette.wampoc.messages.MessageMapper;
+import fr.ocroquette.wampoc.payload.GsonPayload;
 
 /***
  * Represents a single RPC call instance with its input, and the output or result after execution.
@@ -54,7 +55,7 @@ public class RpcCall {
 		if ( ! hasFailed ) {
 			CallResultMessage callResultMessage = new CallResultMessage();
 			callResultMessage.callId = callMessage.callId;
-			callResultMessage.payload = outputJsonElement;
+			callResultMessage.payload = new GsonPayload(outputJsonElement);
 			return MessageMapper.toJson(callResultMessage);
 		}
 		else {

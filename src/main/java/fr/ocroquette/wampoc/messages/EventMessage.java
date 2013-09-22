@@ -58,6 +58,10 @@ public class EventMessage extends Message {
 		}
 	}
 
+	public JsonElement getPayloadAsElement() {
+		return this.payload;
+	}
+
 	public <PayloadType> PayloadType getPayload(Class<PayloadType> type) {
 		Gson gson = new Gson();
 		return gson.fromJson(payload, type);

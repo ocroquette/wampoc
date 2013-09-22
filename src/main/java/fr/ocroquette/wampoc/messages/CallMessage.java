@@ -5,7 +5,6 @@ import java.lang.reflect.Type;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -13,24 +12,31 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.JsonSyntaxException;
+
+import fr.ocroquette.wampoc.payload.GsonPayload;
 
 
 public class CallMessage extends Message {
 	public String callId;
 	public String procedureId;
-	public JsonElement payload;
+	public GsonPayload payload;
 
 	public CallMessage() {
 		super(MessageType.CALL);
+		init();
 	}
 
 	public CallMessage(String callId, String procedureId) {
 		super(MessageType.CALL);
 		this.callId = callId;
 		this.procedureId = procedureId;
+		init();
 	}
 
+	private void init() {
+		this.payload = new GsonPayload();
+	}
+	
 	public static class Serializer implements JsonSerializer<CallMessage> {
 		@Override
 		public JsonElement serialize(CallMessage msg, Type arg1,
@@ -39,8 +45,10 @@ public class CallMessage extends Message {
 			array.add(context.serialize(msg.getType().getCode()));
 			array.add(context.serialize(msg.callId));
 			array.add(context.serialize(msg.procedureId));
-			if ( msg.payload != null )
-				array.add(msg.payload);
+			
+			JsonElement payloadElement = msg.payload.getGsonElement(); 
+			if ( payloadElement != null )
+				array.add(payloadElement);
 			return array;
 		}
 	}
@@ -59,26 +67,17 @@ public class CallMessage extends Message {
 			msg.callId = array.get(1).getAsString();
 			msg.procedureId = array.get(2).getAsString();
 			if ( array.size() >=4 )
-				msg.payload = array.get(3);
+				msg.payload = new GsonPayload(array.get(3));
 			return msg;
 		}
 	}
 
 	public <PayloadType> PayloadType getPayload(Class<PayloadType> type) {
-		if ( payload == null )
-			return null;
-		Gson gson = new Gson();
-		try {
-			return gson.fromJson(payload, type);
-		}
-		catch(JsonSyntaxException e) {
-			return null;
-		}
+		return payload.get(type);
 	}
 
 	public void setPayload(Object payload) {
-		Gson gson = new Gson();
-		this.payload = gson.toJsonTree(payload);
+		this.payload.setFromObject(payload);
 	}
 
 	public boolean hasPayload() {

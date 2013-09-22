@@ -35,9 +35,12 @@ public class ClientTest {
 
 	private final class ProtocollingEventReceiver extends EventReceiver {
 		public int eventCount = 0;
+		public String lastPayload;
+		
 		@Override
 		void onReceive() {
 			eventCount++;
+			lastPayload = getPayload(String.class);
 		}
 	}
 
@@ -162,9 +165,10 @@ public class ClientTest {
 		String topicId = "http://host/handleEvents";
 		ProtocollingChannel channel = new ProtocollingChannel();
 		WampClient client = newClient(channel);
+		String payload = UUID.randomUUID().toString();
 		ProtocollingEventReceiver eventReceiver = new ProtocollingEventReceiver();
 
-		String jsonEventMessage = "[8, \""+topicId+"\", null]";
+		String jsonEventMessage = "[8, \""+topicId+"\", \"" + payload + "\"]";
 		String jsonEventMessageOtherTopic = "[8, \"Not "+topicId+"\", null]";
 		
 		// We didn't subscribe yet, so incoming events shall not trigger the receiver:
@@ -175,7 +179,7 @@ public class ClientTest {
 		assertEquals(0, channel.handledMessages.size());
 		client.subscribe(topicId, eventReceiver);
 		assertEquals(1, channel.handledMessages.size());
-
+		
 		// From this point on we have subscribed to topicId
 		SubscribeMessage subscribeMessage = (SubscribeMessage)MessageMapper.fromJson(channel.handledMessages.get(0));
 		assertEquals(topicId, subscribeMessage.topicUri);
@@ -183,6 +187,7 @@ public class ClientTest {
 		assertEquals(0, eventReceiver.eventCount);
 		client.handleIncomingMessage(jsonEventMessage);
 		assertEquals(1, eventReceiver.eventCount);
+		assertEquals(payload, eventReceiver.lastPayload);
 		client.handleIncomingMessage(jsonEventMessage);
 		assertEquals(2, eventReceiver.eventCount);
 		client.handleIncomingMessage(jsonEventMessageOtherTopic);

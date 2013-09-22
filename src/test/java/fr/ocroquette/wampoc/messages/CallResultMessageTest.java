@@ -34,11 +34,11 @@ public class CallResultMessageTest implements TestsNotToForget {
 		SimplePayload payload1 = new SimplePayload("String", 1); 
 		SimplePayload payload1bis = new SimplePayload("String", 1); 
 		SimplePayload payload2 = new SimplePayload("String", 2); 
-		msg1.setPayload(payload1, SimplePayload.class);
+		msg1.setPayload(payload1);
 		assertFalse(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload1bis, SimplePayload.class);
+		msg1bis.setPayload(payload1bis);
 		assertTrue(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload2, SimplePayload.class);
+		msg1bis.setPayload(payload2);
 		assertFalse(msg1.equals(msg1bis));
 	}
 
@@ -47,7 +47,7 @@ public class CallResultMessageTest implements TestsNotToForget {
 		String callId = rndStr(); 
 		int payload = new Random().nextInt(); 
 		CallResultMessage callMessage = new CallResultMessage(callId);
-		callMessage.setPayload(payload, Integer.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[3," + q(callId) + ","+payload+"]", json);
 
@@ -70,7 +70,7 @@ public class CallResultMessageTest implements TestsNotToForget {
 		String callId = rndStr(); 
 		SimplePayload payload = new SimplePayload(rndStr(), new Random().nextInt() );
 		CallResultMessage callMessage = new CallResultMessage(callId);
-		callMessage.setPayload(payload, SimplePayload.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[3," + q(callId) + ",{\"s\":"+q(payload.s)+",\"i\":"+payload.i+"}]", json);
 
@@ -86,7 +86,7 @@ public class CallResultMessageTest implements TestsNotToForget {
 		String callId = rndStr(); 
 		SimplePayload payload = null;
 		CallResultMessage callMessage = new CallResultMessage(callId);
-		callMessage.setPayload(payload, SimplePayload.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[3," + q(callId) + ",null]", json);
 

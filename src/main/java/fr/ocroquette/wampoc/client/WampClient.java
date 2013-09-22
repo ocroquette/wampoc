@@ -24,6 +24,7 @@ public class WampClient {
 	public String sessionId;
 	protected Channel outgoingChannel;
 	protected Map<String, RpcResultReceiver> rpcResultReceivers;
+	// TODO the current design doesn't allow to subscribe multiple receivers for a given topic
 	protected Map<String, EventReceiver> eventReceivers;
 	protected WelcomeListener welcomeListener;
 
@@ -122,6 +123,7 @@ public class WampClient {
 			System.err.println("ERROR: handleIncomingEventMessage doesn't know a handler for this topic " + message.topicUri);
 			return;
 		}
+		receiver.setPayloadElement(message.getPayloadAsElement());
 		receiver.onReceive();
 	}
 

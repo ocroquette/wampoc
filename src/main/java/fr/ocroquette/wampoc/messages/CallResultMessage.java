@@ -5,7 +5,6 @@ import java.lang.reflect.Type;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -14,21 +13,28 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
+import fr.ocroquette.wampoc.payload.GsonPayload;
+
 
 public class CallResultMessage extends Message {
 
 	public String callId;
-	public JsonElement payload;
+	public GsonPayload payload;
 
 	public CallResultMessage() {
 		super(MessageType.CALLRESULT);
+		init();
 	}
 
 	public CallResultMessage(String callId) {
 		super(MessageType.CALLRESULT);
 		this.callId = callId;
+		init();
 	}
 
+	private void init() {
+		this.payload = new GsonPayload();
+	}
 
 	public static class Serializer implements JsonSerializer<CallResultMessage> {
 		@Override
@@ -37,7 +43,7 @@ public class CallResultMessage extends Message {
 			JsonArray array = new JsonArray();
 			array.add(context.serialize(msg.getType().getCode()));
 			array.add(context.serialize(msg.callId));
-			array.add(msg.payload);
+			array.add(msg.payload.getGsonElement());
 			return array;
 		}
 	}
@@ -54,19 +60,17 @@ public class CallResultMessage extends Message {
 			
 			CallResultMessage msg = new CallResultMessage();
 			msg.callId = array.get(1).getAsString();
-			msg.payload = array.get(2);
+			msg.payload = new GsonPayload(array.get(2));
 			return msg;
 		}
 	}
 
 	public <PayloadType> PayloadType getPayload(Class<PayloadType> type) {
-		Gson gson = new Gson();
-		return gson.fromJson(payload, type);
+		return this.payload.get(type);
 	}
 
-	public <PayloadType> void setPayload(PayloadType payload, Class<PayloadType> type) {
-		Gson gson = new Gson();
-		this.payload = gson.toJsonTree(payload);
+	public void setPayload(Object payload) {
+		this.payload.setFromObject(payload);
 	}
 
 	@Override
