@@ -105,7 +105,7 @@ public class WampServer {
 	protected void handleIncomingPublishMessage(final Session session, final PublishMessage message) throws IOException {
 
 		EventMessage eventMessage = new EventMessage(message.topicUri);
-		eventMessage.setPayload(message.payload);
+		eventMessage.setPayloadJsonElement(message.payload);
 		final String eventMessageJson = MessageMapper.toJson(eventMessage);
 
 		Subscriptions.ActionOnSubscriber action = new Subscriptions.ActionOnSubscriber() {

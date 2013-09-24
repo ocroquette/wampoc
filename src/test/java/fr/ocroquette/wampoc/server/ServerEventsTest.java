@@ -38,13 +38,11 @@ public class ServerEventsTest {
 		PublishMessage publishMessage = new PublishMessage(topicId);
 		publishMessage.setPayload(payload);
 
-		// System.out.println(MessageMapper.toJson(publishMessage));
 		server.handleIncomingMessage(session1, publishMessage);
 
 		assertEquals(2, channel1.handledMessages.size());
 		assertEquals(2, channel2.handledMessages.size());
 
-		// System.out.println(channel.handledMessages.get(1));
 		Message message = MessageMapper.fromJson(channel1.last());
 		EventMessage eventMessage = (EventMessage) message;
 		assertEquals(payload, eventMessage.getPayload(String.class));

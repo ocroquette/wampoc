@@ -168,7 +168,7 @@ public class ClientTest {
 		String payload = UUID.randomUUID().toString();
 		ProtocollingEventReceiver eventReceiver = new ProtocollingEventReceiver();
 
-		String jsonEventMessage = "[8, \""+topicId+"\", \"" + payload + "\"]";
+		String jsonEventMessage = "[8,\""+topicId+"\",\"" + payload + "\"]";
 		String jsonEventMessageOtherTopic = "[8, \"Not "+topicId+"\", null]";
 		
 		// We didn't subscribe yet, so incoming events shall not trigger the receiver:
@@ -202,6 +202,25 @@ public class ClientTest {
 		assertEquals(2, eventReceiver.eventCount);
 		client.handleIncomingMessage(jsonEventMessage);
 		assertEquals(2, eventReceiver.eventCount);
+	}
+	
+	@Test
+	public void handlePublish() throws IOException {
+		String topicId = "http://host/handleEvents";
+		ProtocollingChannel channel = new ProtocollingChannel();
+		WampClient client = newClient(channel);
+		String payload = UUID.randomUUID().toString();
+
+		assertEquals(0, channel.handledMessages.size());
+
+		String expectedOutgoingMessage = "[7,\""+topicId+"\",\"" + payload + "\"]";
+		client.publish(topicId, payload);
+		
+		System.out.println(expectedOutgoingMessage);
+		System.out.println(channel.handledMessages.get(0));
+		assertEquals(1, channel.handledMessages.size());
+		assertEquals(expectedOutgoingMessage, channel.handledMessages.get(0));
+
 	}
 
 	public WampClient newClient(Channel channel) {

@@ -13,6 +13,7 @@ import fr.ocroquette.wampoc.messages.EventMessage;
 import fr.ocroquette.wampoc.messages.Message;
 import fr.ocroquette.wampoc.messages.MessageMapper;
 import fr.ocroquette.wampoc.messages.MessageType;
+import fr.ocroquette.wampoc.messages.PublishMessage;
 import fr.ocroquette.wampoc.messages.SubscribeMessage;
 import fr.ocroquette.wampoc.messages.UnsubscribeMessage;
 import fr.ocroquette.wampoc.messages.WelcomeMessage;
@@ -145,6 +146,12 @@ public class WampClient {
 		outgoingChannel.handle(MessageMapper.toJson(msg));
 	}
 
+	public void publish(String topicId, Object payload) throws IOException {
+		PublishMessage msg = new PublishMessage(topicId);
+		msg.setPayload(payload);
+		outgoingChannel.handle(MessageMapper.toJson(msg));
+	}
+
 	public void subscribe(String topicId, EventReceiver eventReceiver) throws IOException {
 		synchronized (eventReceivers) {
 			eventReceivers.put(topicId, eventReceiver);
@@ -158,7 +165,7 @@ public class WampClient {
 		}
 		outgoingChannel.handle(MessageMapper.toJson(new UnsubscribeMessage(topicId)));
 	}
-
+	
 	public void setWelcomeListener(WelcomeListener welcomeListener) {
 		this.welcomeListener = welcomeListener;
 	}
@@ -180,5 +187,4 @@ public class WampClient {
 	public boolean hasBeenWelcomed() {
 		return hasBeenWelcomed;
 	}
-
 }

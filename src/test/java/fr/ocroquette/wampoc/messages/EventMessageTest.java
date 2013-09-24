@@ -34,11 +34,11 @@ public class EventMessageTest implements TestsNotToForget {
 		SimplePayload payload1 = new SimplePayload("String", 1); 
 		SimplePayload payload1bis = new SimplePayload("String", 1); 
 		SimplePayload payload2 = new SimplePayload("String", 2); 
-		msg1.setPayload(payload1, SimplePayload.class);
+		msg1.setPayload(payload1);
 		assertFalse(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload1bis, SimplePayload.class);
+		msg1bis.setPayload(payload1bis);
 		assertTrue(msg1.equals(msg1bis));
-		msg1bis.setPayload(payload2, SimplePayload.class);
+		msg1bis.setPayload(payload2);
 		assertFalse(msg1.equals(msg1bis));
 	}
 
@@ -47,7 +47,7 @@ public class EventMessageTest implements TestsNotToForget {
 		String topicUri = rndStr(); 
 		int payload = new Random().nextInt(); 
 		EventMessage callMessage = new EventMessage(topicUri);
-		callMessage.setPayload(payload, Integer.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[8," + q(topicUri) + ","+payload+"]", json);
 
@@ -70,7 +70,7 @@ public class EventMessageTest implements TestsNotToForget {
 		String topicUri = rndStr(); 
 		SimplePayload payload = new SimplePayload(rndStr(), new Random().nextInt() );
 		EventMessage callMessage = new EventMessage(topicUri);
-		callMessage.setPayload(payload, SimplePayload.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[8," + q(topicUri) + ",{\"s\":"+q(payload.s)+",\"i\":"+payload.i+"}]", json);
 
@@ -86,7 +86,7 @@ public class EventMessageTest implements TestsNotToForget {
 		String topicUri = rndStr(); 
 		SimplePayload payload = null;
 		EventMessage callMessage = new EventMessage(topicUri);
-		callMessage.setPayload(payload, SimplePayload.class);
+		callMessage.setPayload(payload);
 		String json = MessageMapper.toJson(callMessage);
 		assertEquals("[8," + q(topicUri) + ",null]", json);
 
