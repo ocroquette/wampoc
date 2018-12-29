@@ -2,3 +2,5 @@ target/*
 !target/*.jar
 config/*/logs/*
 *.log
+/target/
+*.iml
