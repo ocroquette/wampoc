@@ -14,5 +14,6 @@ public class ChannelToConnectionAdapter implements Channel {
 	public void handle(String message) throws IOException {
 		connection.sendMessage(message);
 	}
+	// Jetty's connection:
 	private Connection connection;
 }
