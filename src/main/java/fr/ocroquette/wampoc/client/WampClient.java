@@ -86,7 +86,7 @@ public class WampClient {
 	protected void handleIncomingCallResultMessage(CallResultMessage message) {
 		RpcResultReceiver receiver = null;
 		synchronized(rpcResultReceivers) {
-			receiver = rpcResultReceivers.get(message.callId);
+			receiver = rpcResultReceivers.remove(message.callId);
 		}
 		if ( receiver == null ) {
 			// TODO logging
@@ -101,7 +101,7 @@ public class WampClient {
 	protected void handleIncomingCallErrorMessage(CallErrorMessage message) {
 		RpcResultReceiver receiver = null;
 		synchronized(rpcResultReceivers) {
-			receiver = rpcResultReceivers.get(message.callId);
+			receiver = rpcResultReceivers.remove(message.callId);
 		}
 		if ( receiver == null ) {
 			// TODO logging
@@ -117,7 +117,7 @@ public class WampClient {
 	protected void handleIncomingEventMessage(EventMessage message) {
 		EventReceiver receiver = null;
 		synchronized(eventReceivers) {
-			receiver = eventReceivers.get(message.topicUri);
+			receiver = eventReceivers.remove(message.topicUri);
 		}
 		if ( receiver == null ) {
 			// TODO logging
